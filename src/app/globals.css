@@ -1,26 +1,75 @@
 @import "tailwindcss";
 
+/* -------------------------------------------------------
+   Theme Tokens (Premium light/dark)
+   - Use RGB triplets so Tailwind arbitrary opacity works:
+     bg-[rgb(var(--background))/0.8], border-[rgb(var(--border))/0.6], etc.
+-------------------------------------------------------- */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* base */
+  --background: 255 255 255;
+  --foreground: 17 24 39;   /* slate-900 */
+
+  /* surfaces */
+  --card: 255 255 255;
+  --card-2: 249 250 251;    /* subtle alt surface */
+  --border: 229 231 235;    /* gray-200 */
+
+  /* text */
+  --muted: 107 114 128;     /* gray-500 */
+  --muted-2: 156 163 175;   /* gray-400 */
+
+  /* accents (optional) */
+  --ring: 99 102 241;       /* indigo-500 */
+
+  /* shadows (just a helper value) */
+  --shadow: 17 24 39;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* next-themes uses class="dark" on <html> */
+html.dark {
+  --background: 10 12 16;   /* deep near-black */
+  --foreground: 241 245 249;/* slate-100 */
+
+  --card: 16 19 26;         /* deep slate */
+  --card-2: 20 24 33;
+  --border: 40 44 58;
+
+  --muted: 148 163 184;     /* slate-400 */
+  --muted-2: 100 116 139;   /* slate-500 */
+
+  --ring: 129 140 248;      /* indigo-400 */
+  --shadow: 0 0 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Apply variables to page */
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: rgb(var(--background));
+  color: rgb(var(--foreground));
+}
+
+/* Smooth theme transitions (nice “real” feel) */
+* {
+  transition-property: background-color, color, border-color, fill, stroke, box-shadow;
+  transition-duration: 180ms;
+  transition-timing-function: ease;
+}
+
+/* Font */
+body {
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Your hero dots: adjust for both themes */
+.hero-dots {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.10) 1px, transparent 1px);
+  background-size: 18px 18px;
+  opacity: 0.35;
+}
+
+html.dark .hero-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.10) 1px, transparent 1px);
+  opacity: 0.22;
 }

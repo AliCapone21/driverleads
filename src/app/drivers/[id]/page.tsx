@@ -339,7 +339,6 @@ export default function DriverProfilePage() {
                     </div>
                   </div>
                 </motion.div>
-
                 {/* Endorsements */}
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}

@@ -208,8 +208,8 @@ export default function DriversClient() {
       </header>
 
       <div className="mx-auto max-w-5xl px-4 py-8">
-        {/* Controls */}
-        <div className="sticky top-20 z-30 space-y-4 mb-8">
+        {/* Controls - Fixed Glassmorphism background */}
+        <div className="sticky top-16 z-30 py-4 -mx-4 px-4 bg-[#070A12]/85 backdrop-blur-xl border-b border-white/10 space-y-4 mb-8 transition-all">
           {/* Tabs */}
           <div className="relative w-fit">
             <div className="flex p-1.5 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 shadow-sm shadow-black/20 ring-1 ring-white/5">

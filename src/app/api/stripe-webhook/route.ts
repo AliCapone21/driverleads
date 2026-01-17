@@ -6,8 +6,8 @@ export async function POST(req: Request) {
   const sig = req.headers.get("stripe-signature")
   if (!sig) return NextResponse.json({ error: "Missing signature" }, { status: 400 })
 
-  // IMPORTANT: read raw body for signature verification
-  const body = await (await req.blob()).text()
+  // ✅ FIXED: Use req.text() for reliable signature verification
+  const body = await req.text()
 
   let event
   try {
@@ -16,7 +16,8 @@ export async function POST(req: Request) {
       sig,
       process.env.STRIPE_WEBHOOK_SECRET!
     )
-  } catch {
+  } catch (err) {
+    console.error("Webhook Signature Error:", err)
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 })
   }
 
@@ -34,7 +35,7 @@ export async function POST(req: Request) {
         process.env.SUPABASE_SERVICE_ROLE_KEY!
       )
 
-      await supabaseAdmin.from("unlocks").upsert(
+      const { error } = await supabaseAdmin.from("unlocks").upsert(
         {
           user_id: userId,
           driver_id: driverId,
@@ -42,6 +43,8 @@ export async function POST(req: Request) {
         },
         { onConflict: "user_id,driver_id" }
       )
+      
+      if (error) console.error("Supabase Write Error:", error)
     }
   }
 

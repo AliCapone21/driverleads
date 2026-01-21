@@ -18,6 +18,7 @@ type DriverRow = {
   driver_type: "company" | "owner_operator"
   experience_years: number
   endorsements: string[]
+  status: string | null // <--- NEW FIELD
 }
 
 type DriverPrivateRow = {
@@ -70,7 +71,7 @@ export default function DriverProfilePage() {
 
       const { data: driverData, error: driverErr } = await supabase
         .from("drivers")
-        .select("id, first_name, last_initial, city, state, living_city, living_state, dob, driver_type, experience_years, endorsements")
+        .select("id, first_name, last_initial, city, state, living_city, living_state, dob, driver_type, experience_years, endorsements, status")
         .eq("id", id)
         .single()
 
@@ -269,6 +270,18 @@ export default function DriverProfilePage() {
                           >
                             {typeLabel(driver.driver_type)}
                           </span>
+
+                          {/* STATUS BADGES */}
+                          {driver.status === 'active' && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-500 text-black text-[10px] font-extrabold uppercase tracking-wider shadow-[0_0_10px_rgba(16,185,129,0.4)]">
+                              Ready to Hire
+                            </span>
+                          )}
+                          {driver.status === 'passive' && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 text-[10px] font-extrabold uppercase tracking-wider border border-indigo-500/30">
+                              Open to Offers
+                            </span>
+                          )}
                         </div>
 
                         <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">

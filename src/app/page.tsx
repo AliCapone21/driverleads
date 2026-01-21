@@ -3,27 +3,100 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { AnimatePresence, motion } from "framer-motion"
+import { supabase } from "@/lib/supabaseClient"
+import { User } from "@supabase/supabase-js"
+import { useRouter } from "next/navigation"
 
+/* --- Animation Settings --- */
 const ease: [number, number, number, number] = [0.22, 1, 0.36, 1]
-
 const fadeUp = {
   hidden: { opacity: 0, y: 14, filter: "blur(6px)" },
   show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.8, ease } },
 }
-
 const stagger = {
   hidden: {},
   show: { transition: { staggerChildren: 0.08, delayChildren: 0.08 } },
 }
 
 export default function Home() {
+  const router = useRouter()
   const [isScrolled, setIsScrolled] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+  const [isDriver, setIsDriver] = useState(false) 
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [navigating, setNavigating] = useState(false) 
+   
+  // Controls visibility of buttons
+  const [authReady, setAuthReady] = useState(false)
 
+  // 1. Check Login Status on Mount
   useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const { data } = await supabase.auth.getUser()
+        
+        if (data.user) {
+          setUser(data.user)
+          // Check if user is a driver
+          const { data: driver } = await supabase
+            .from("drivers")
+            .select("id")
+            .eq("user_id", data.user.id)
+            .maybeSingle()
+          
+          setIsDriver(!!driver)
+        } else {
+          setUser(null)
+          setIsDriver(false)
+        }
+      } catch (error) {
+        console.error("Auth check failed", error)
+      } finally {
+        setAuthReady(true)
+      }
+    }
+    
+    checkUser()
+
+    // Listen for auth changes (sign in/out)
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setUser(session?.user ?? null)
+      if (session?.user) {
+         const { data: driver } = await supabase
+          .from("drivers")
+          .select("id")
+          .eq("user_id", session.user.id)
+          .maybeSingle()
+         setIsDriver(!!driver)
+      } else {
+        setIsDriver(false)
+      }
+      setAuthReady(true)
+    })
+
     const handleWindowScroll = () => setIsScrolled(window.scrollY > 20)
     window.addEventListener("scroll", handleWindowScroll)
-    return () => window.removeEventListener("scroll", handleWindowScroll)
+    
+    return () => {
+      window.removeEventListener("scroll", handleWindowScroll)
+      authListener.subscription.unsubscribe()
+    }
   }, [])
+
+  const handleSignOut = async () => {
+    setNavigating(true)
+    await supabase.auth.signOut()
+    setMenuOpen(false)
+    setUser(null)
+    setIsDriver(false)
+    router.refresh()
+    setNavigating(false)
+  }
+
+  const handleNav = (url: string) => {
+    setNavigating(true)
+    router.push(url)
+  }
 
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, id: string) => {
     e.preventDefault()
@@ -33,7 +106,7 @@ export default function Home() {
 
   const navItems = useMemo(
     () =>
-      ["Features", "Pricing", "How it works"].map((item) => ({
+      ["Benefits", "How it works", "Recruiters"].map((item) => ({
         label: item,
         id: item.toLowerCase().replace(/\s+/g, "-"),
       })),
@@ -41,7 +114,7 @@ export default function Home() {
   )
 
   return (
-    <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)] selection:bg-indigo-500 selection:text-white relative overflow-hidden">
+    <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)] selection:bg-indigo-500 selection:text-white relative overflow-hidden font-sans">
       {/* GLOBAL BACKGROUND MESH */}
       <div className="fixed inset-0 z-[-1] pointer-events-none">
         <div className="absolute top-[-10%] right-[-5%] w-[800px] h-[800px] bg-indigo-500/10 rounded-full blur-[120px] dark:bg-indigo-500/20" />
@@ -61,57 +134,132 @@ export default function Home() {
               : "bg-transparent border-b border-transparent py-5"
           }`}
         >
-          <div className="mx-auto max-w-6xl px-4 flex items-center justify-between">
+          <div className="mx-auto max-w-7xl px-6 flex items-center justify-between">
+            
+            {/* Logo */}
             <a href="/" className="flex items-center gap-3 group">
               <div className="relative h-10 w-10 overflow-hidden rounded-xl bg-gradient-to-br from-[var(--foreground)] to-[var(--muted-foreground)] flex items-center justify-center group-hover:scale-[1.06] transition-transform duration-500 text-[var(--background)] shadow-lg">
                 <span className="font-extrabold text-lg">DL</span>
               </div>
-
               <div className="leading-tight">
-                <div className="font-extrabold tracking-tight text-lg text-[var(--foreground)]">Driver Leads</div>
-                <div className="text-[10px] uppercase tracking-wider text-[var(--muted-foreground)] font-bold">
-                  For US carriers
-                </div>
+                <div className="font-extrabold tracking-tight text-xl text-[var(--foreground)]">Driver Leads</div>
               </div>
             </a>
 
-            <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-[var(--muted-foreground)]">
-              {navItems.map(({ label, id }) => (
-                <a
-                  key={id}
-                  href={`#${id}`}
-                  onClick={(e) => handleScroll(e, id)}
-                  className="cursor-pointer hover:text-[var(--foreground)] transition-colors duration-200"
-                >
-                  {label}
-                </a>
-              ))}
-              <a className="hover:text-[var(--foreground)] transition-colors duration-200" href="/drivers">
-                Drivers
-              </a>
+            {/* Center Nav */}
+            <nav className="hidden md:flex items-center bg-[var(--foreground)]/5 rounded-full px-6 py-2 border border-[var(--border)]/50 backdrop-blur-md">
+              <div className="flex items-center gap-8">
+                {navItems.map(({ label, id }) => (
+                  <a
+                    key={id}
+                    href={`#${id}`}
+                    onClick={(e) => handleScroll(e, id)}
+                    className="cursor-pointer text-sm font-bold text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors duration-200"
+                  >
+                    {label}
+                  </a>
+                ))}
+              </div>
             </nav>
 
-            <div className="flex items-center gap-3">
+            {/* Right Side: Auth & Theme */}
+            <div className="flex items-center gap-4">
               <ThemeToggle />
-              <a
-                href="/login"
-                className="inline-flex px-4 py-2 rounded-xl text-[var(--foreground)] hover:bg-[var(--muted)] transition-all duration-300 text-sm font-bold"
-              >
-                SignUp / Login
-              </a>
+
+              {/* Show Profile if Logged In */}
+              {authReady && user && (
+                <div className="relative">
+                  <button 
+                    onClick={() => setMenuOpen(!menuOpen)}
+                    className="h-10 w-10 rounded-full bg-gradient-to-tr from-emerald-500 to-indigo-500 p-0.5 shadow-lg hover:scale-105 transition-transform"
+                  >
+                    <div className="h-full w-full rounded-full bg-[var(--background)] flex items-center justify-center">
+                      <span className="font-bold text-sm text-[var(--foreground)]">
+                        {user.email?.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  </button>
+
+                  <AnimatePresence>
+                    {menuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute right-0 mt-3 w-64 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-2xl shadow-black/40 backdrop-blur-xl z-50"
+                      >
+                        <div className="mb-4 pb-4 border-b border-[var(--border)]">
+                          <p className="text-xs font-bold text-[var(--muted-foreground)] uppercase">Signed in as</p>
+                          <p className="text-sm font-semibold truncate text-[var(--foreground)]">{user.email}</p>
+                          {isDriver && <span className="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full font-bold uppercase mt-1 inline-block">Driver Account</span>}
+                          {!isDriver && <span className="text-[10px] bg-indigo-500/10 text-indigo-500 px-2 py-0.5 rounded-full font-bold uppercase mt-1 inline-block">Recruiter Account</span>}
+                        </div>
+                        
+                        <div className="space-y-2">
+                          {isDriver ? (
+                            <button
+                              onClick={() => handleNav("/drivers/dashboard")}
+                              disabled={navigating}
+                              className="w-full text-center py-2.5 rounded-xl bg-[var(--foreground)] text-[var(--background)] text-sm font-bold hover:opacity-90 transition-opacity flex justify-center items-center gap-2"
+                            >
+                              {navigating ? <span className="h-4 w-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin"/> : "Go to Dashboard"}
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => handleNav("/recruiter/settings")}
+                              disabled={navigating}
+                              className="w-full text-center py-2.5 rounded-xl bg-[var(--foreground)] text-[var(--background)] text-sm font-bold hover:opacity-90 transition-opacity flex justify-center items-center gap-2"
+                            >
+                              {navigating ? <span className="h-4 w-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin"/> : "Edit Info"}
+                            </button>
+                          )}
+                          <button 
+                            onClick={handleSignOut}
+                            disabled={navigating}
+                            className="w-full text-center py-2.5 rounded-xl border border-[var(--border)] text-[var(--foreground)] text-sm font-bold hover:bg-[var(--muted)] transition-colors flex justify-center items-center gap-2"
+                          >
+                            {navigating ? <span className="h-4 w-4 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin"/> : "Sign Out"}
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+
+              {/* Show Buttons if Logged Out */}
+              {authReady && !user && (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => handleNav("/login")}
+                    disabled={navigating}
+                    className="hidden sm:inline-flex px-5 py-2.5 rounded-xl text-[var(--foreground)] font-bold hover:bg-[var(--muted)] transition-all text-sm border border-transparent hover:border-[var(--border)]"
+                  >
+                    Log In
+                  </button>
+                  <ActionBtn 
+                     onClick={() => handleNav("/join")} 
+                     loading={navigating} 
+                     variant="primary"
+                     size="sm"
+                  >
+                    Driver Sign Up
+                  </ActionBtn>
+                </div>
+              )}
             </div>
           </div>
         </motion.div>
       </header>
 
-      {/* HERO */}
-      <section className="relative pt-32 pb-32 sm:pt-40 sm:pb-40">
+      {/* HERO SECTION */}
+      <section className="relative pt-32 pb-32 sm:pt-48 sm:pb-40">
         <div className="mx-auto max-w-6xl px-4 relative">
           <motion.div
             variants={stagger}
             initial="hidden"
             animate="show"
-            className="max-w-3xl mx-auto text-center sm:text-left"
+            className="max-w-4xl mx-auto text-center"
           >
             {/* Pill Badge */}
             <motion.div
@@ -122,114 +270,142 @@ export default function Home() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
-              Verified driver leads • Pay-per-unlock
+              Over 500+ carriers looking for drivers right now
             </motion.div>
 
             <motion.h1
               variants={fadeUp}
               className="text-5xl sm:text-7xl font-extrabold tracking-tight text-[var(--foreground)] leading-[1.1] mb-6"
             >
-              Find drivers <br className="hidden sm:block" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-emerald-500">
-                faster than ever.
+              Stop searching for loads. <br className="hidden sm:block" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-indigo-500">
+                Let the offers find you.
               </span>
             </motion.h1>
 
             <motion.p
               variants={fadeUp}
-              className="text-xl sm:text-2xl text-[var(--muted-foreground)] leading-relaxed max-w-2xl mx-auto sm:mx-0 font-medium"
+              className="text-xl sm:text-2xl text-[var(--muted-foreground)] leading-relaxed max-w-2xl mx-auto font-medium"
             >
-              The modern marketplace for US carriers. Browse verified profiles for free, unlock contact details for{" "}
-              <DealPrice price="$10" note="limited offer" />.
+              Want a higher salary as a driver in the US? Just fill up the form. 
+              Big companies will find you and send you offers instantly.
             </motion.p>
 
-            {/* SINGLE MAIN CTA */}
-            <motion.div
-              variants={fadeUp}
-              className="mt-12 flex justify-center sm:justify-start"
-            >
-              <motion.a
-                href="/drivers"
-                whileHover={{ y: -4 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.8, ease }}
-                className="group relative inline-flex items-center justify-center px-10 py-5 rounded-3xl font-extrabold text-lg sm:text-xl
-                           bg-[var(--foreground)] text-[var(--background)] shadow-2xl shadow-[var(--foreground)]/20
-                           hover:shadow-[var(--foreground)]/30 active:scale-95 transition-all duration-300"
-              >
-                {/* glow */}
-                <span className="absolute -inset-1 rounded-[28px] bg-emerald-500/20 blur-xl opacity-70 group-hover:opacity-100 transition-opacity" />
-                <span className="relative flex items-center gap-3">
-                  Find Drivers Now!
-                  <span className="h-9 w-9 rounded-2xl bg-[var(--background)]/12 border border-[var(--background)]/15 flex items-center justify-center group-hover:translate-x-1 transition-transform duration-500">
-                    →
-                  </span>
-                </span>
-              </motion.a>
-            </motion.div>
-
-            {/* Stats */}
-            <motion.div
-              variants={fadeUp}
-              className="mt-16 p-1 rounded-2xl bg-gradient-to-r from-[var(--border)] via-transparent to-[var(--border)] opacity-80"
-            >
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8 bg-[var(--background)]/80 backdrop-blur-xl rounded-xl p-6 border border-[var(--border)]/50">
-                <Stat label="Unlock price" value="$10" />
-                <Stat label="Secure access" value="RLS" />
-                <Stat label="Payments" value="Stripe" />
-                <Stat label="Database" value="Postgres" />
+            {/* --- LOADING SPINNER --- */}
+            {!authReady && (
+              <div className="mt-12 flex justify-center opacity-50">
+                <div className="h-8 w-8 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin"></div>
               </div>
+            )}
+
+            {/* --- BUTTONS: LOGGED OUT --- */}
+            {authReady && !user && ( 
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease }}
+                className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-6"
+              >
+                {/* Primary: For Drivers */}
+                <ActionBtn 
+                  onClick={() => handleNav("/join")}
+                  loading={navigating}
+                  variant="primary"
+                  size="lg"
+                  badge="Free"
+                >
+                  Join as Driver
+                </ActionBtn>
+
+                {/* Secondary: For Recruiters */}
+                <ActionBtn 
+                  onClick={() => handleNav("/drivers")}
+                  loading={navigating}
+                  variant="outline"
+                  size="lg"
+                >
+                  I'm a Recruiter
+                </ActionBtn>
+              </motion.div>
+            )}
+
+            {/* --- BUTTONS: LOGGED IN --- */}
+            {authReady && user && (
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease }}
+                className="mt-12 flex flex-col items-center gap-6"
+              >
+                {isDriver ? (
+                  <ActionBtn
+                    onClick={() => handleNav("/drivers/dashboard")}
+                    loading={navigating}
+                    variant="secondary"
+                    size="lg"
+                  >
+                    Go to Dashboard
+                  </ActionBtn>
+                ) : (
+                  <>
+                    <ActionBtn
+                      onClick={() => handleNav("/drivers")}
+                      loading={navigating}
+                      variant="secondary"
+                      size="lg"
+                    >
+                      Browse Drivers
+                    </ActionBtn>
+
+                    <button
+                      onClick={() => handleNav("/recruiter/settings")}
+                      disabled={navigating}
+                      className="text-sm font-bold text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+                    >
+                      Edit recruiter profile →
+                    </button>
+                  </>
+                )}
+              </motion.div>
+            )}
+
+            {/* Social Proof */}
+            <motion.div
+              variants={fadeUp}
+              className="mt-16 flex flex-wrap justify-center gap-x-8 gap-y-4 opacity-50 grayscale mix-blend-luminosity text-sm font-bold uppercase tracking-widest"
+            >
+               <span>FedEx Custom Critical</span>
+               <span>•</span>
+               <span>Landstar</span>
+               <span>•</span>
+               <span>JB Hunt</span>
+               <span>•</span>
+               <span>Schneider</span>
             </motion.div>
           </motion.div>
         </div>
       </section>
 
-      {/* FEATURES */}
-      <section id="features" className="py-32 relative">
+      {/* BENEFITS */}
+      <section id="benefits" className="py-24 border-t border-[var(--border)] bg-[var(--background)]/50 relative">
         <div className="mx-auto max-w-6xl px-4">
-          <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-10% 0px" }}>
-            <motion.div variants={fadeUp} className="max-w-2xl mb-16">
-              <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[var(--foreground)]">
-                Everything carriers need
-              </h2>
-              <p className="mt-4 text-xl text-[var(--muted-foreground)]">
-                We stripped away the subscriptions and complexity.
-              </p>
-            </motion.div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              <FeatureCard
-                title="Preview-first"
-                desc="Only safe fields are shown publicly. Phone numbers stay locked until you decide."
-                icon="eye"
+           <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid md:grid-cols-3 gap-10">
+              <ValueCard 
+                icon="💰"
+                title="Higher Salary"
+                desc="Drivers on our platform earn 20% more on average because carriers are competing for YOU."
               />
-              <FeatureCard
-                title="Unlock forever"
-                desc="Pay $10 once. The driver's details belong to your account permanently."
-                icon="lock"
+              <ValueCard 
+                icon="🔒"
+                title="Private & Secure"
+                desc="Your contact info is hidden. Recruiters only see it if you accept their connection request."
               />
-              <FeatureCard
-                title="Instant verify"
-                desc="We validate CDL status and endorsements before listing drivers."
-                icon="shield"
+              <ValueCard 
+                icon="⚡"
+                title="Instant Offers"
+                desc="Stop calling dispatchers. Get job offers sent directly to your phone via SMS."
               />
-              <FeatureCard
-                title="Stripe payments"
-                desc="Secure, one-click checkouts. Automated receipts for your expenses."
-                icon="card"
-              />
-              <FeatureCard
-                title="Audit trail"
-                desc="Track every unlock with timestamps. Perfect for team accountability."
-                icon="clock"
-              />
-              <FeatureCard
-                title="Scale ready"
-                desc="Built to handle 1 driver or 10,000. Start small and grow at your pace."
-                icon="chart"
-              />
-            </div>
-          </motion.div>
+           </motion.div>
         </div>
       </section>
 
@@ -239,47 +415,51 @@ export default function Home() {
           <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-10% 0px" }}>
             <motion.div variants={fadeUp} className="text-center max-w-2xl mx-auto mb-20">
               <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[var(--foreground)]">
-                How it works
+                Get hired in 3 steps
               </h2>
               <p className="mt-4 text-xl text-[var(--muted-foreground)]">
-                Get connected in three simple steps.
+                We made it easier than applying for a loan.
               </p>
             </motion.div>
 
             <div className="grid md:grid-cols-3 gap-8 relative">
               <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-transparent via-[var(--border)] to-transparent z-0" />
-              <StepCard n="1" title="Browse drivers" desc="Filter by state, city, and endorsements to find your perfect match." />
-              <StepCard n="2" title="Open profile" desc="View experience years, living location, and age range." />
-              <StepCard n="3" title="Pay & unlock" desc="One click to unlock phone, email, and full CDL history." />
+              <StepCard n="1" title="Create Profile" desc="Fill out a simple form about your experience and truck type." />
+              <StepCard n="2" title="Wait for Offers" desc="We show your profile to 500+ top rated US carriers." />
+              <StepCard n="3" title="Accept & Drive" desc="Choose the offer with the highest pay per mile. No fees." />
             </div>
 
-            <motion.div variants={fadeUp} className="mt-20 flex justify-center">
-              <motion.a
-                href="/drivers"
-                whileHover={{ x: 4 }}
-                transition={{ duration: 0.8, ease }}
-                className="group flex items-center gap-3 text-lg font-bold text-[var(--foreground)] transition-all"
-              >
-                Start Browsing Now
-                <div className="w-8 h-8 rounded-full bg-[var(--foreground)] text-[var(--background)] flex items-center justify-center group-hover:translate-x-2 transition-transform duration-500">
-                  →
-                </div>
-              </motion.a>
-            </motion.div>
+            {/* Bottom CTA (Only for logged out) */}
+            {authReady && !user && (
+              <motion.div variants={fadeUp} className="mt-20 flex justify-center">
+                <ActionBtn 
+                  onClick={() => handleNav("/join")}
+                  loading={navigating}
+                  variant="primary"
+                  size="lg"
+                  arrow
+                >
+                  Start Your Profile
+                </ActionBtn>
+              </motion.div>
+            )}
           </motion.div>
         </div>
       </section>
 
-      {/* PRICING */}
-      <section id="pricing" className="py-32 relative">
+      {/* RECRUITER PRICING */}
+      <section id="recruiters" className="py-32 relative border-t border-[var(--border)]">
         <div className="mx-auto max-w-6xl px-4">
           <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-10% 0px" }}>
             <motion.div variants={fadeUp} className="text-center max-w-3xl mx-auto mb-20">
+              <div className="inline-block px-3 py-1 rounded-full bg-[var(--muted)] text-[var(--muted-foreground)] text-xs font-bold uppercase tracking-widest mb-4">
+                For Companies
+              </div>
               <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[var(--foreground)]">
-                Simple Pricing
+                Recruiter Access
               </h2>
               <p className="mt-4 text-xl text-[var(--muted-foreground)]">
-                No hidden fees. No subscriptions. Just results.
+                Are you a carrier? Stop paying subscription fees.
               </p>
             </motion.div>
 
@@ -287,120 +467,90 @@ export default function Home() {
               <PricingCard
                 title="Pay as you go"
                 price="$10"
-                sub="per driver"
+                sub="per unlock"
                 bullets={["Unlock contacts instantly", "Lifetime access to profile", "Direct PDF Downloads", "No monthly commitment"]}
                 ctaText="Browse Drivers"
                 ctaHref="/drivers"
                 highlight
               />
               <PricingCard
-                title="Starter (soon)"
+                title="Starter"
                 price="$49"
                 sub="per month"
                 bullets={["Includes 10 unlock credits", "Team usage tracking", "Priority support", "Rollover credits"]}
-                ctaText="Join Waitlist"
+                ctaText="Coming Soon"
                 ctaHref="#"
                 disabled
               />
               <PricingCard
-                title="Pro (soon)"
+                title="Pro"
                 price="$199"
                 sub="per month"
                 bullets={["Includes 50 unlock credits", "Admin dashboard + exports", "Dedicated account manager", "API Access"]}
-                ctaText="Join Waitlist"
+                ctaText="Coming Soon"
                 ctaHref="#"
                 disabled
               />
             </div>
+            
+            <motion.div variants={fadeUp} className="mt-12 text-center">
+              <p className="text-sm text-[var(--muted-foreground)]">
+                <span className="font-bold text-emerald-500">Drivers:</span> You never pay. Joining is 100% free for you.
+              </p>
+            </motion.div>
+
           </motion.div>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="border-t border-[var(--border)] bg-[var(--background)]/50 backdrop-blur-md pt-20 pb-10">
+      {/* UPDATED FOOTER */}
+      <footer className="relative z-10 border-t border-[var(--border)] bg-[var(--background)]/80 backdrop-blur-xl pt-20 pb-10">
         <div className="mx-auto max-w-6xl px-4">
-          <div className="grid md:grid-cols-4 gap-12 mb-16">
-            <div className="col-span-1 md:col-span-1">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="h-8 w-8 rounded-lg bg-[var(--foreground)] text-[var(--background)] flex items-center justify-center font-bold text-xs">
-                  DL
-                </div>
-                <div className="font-bold tracking-tight text-[var(--foreground)] text-lg">Driver Leads</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
+            <div className="col-span-2 md:col-span-1">
+              <div className="flex items-center gap-2 mb-4">
+                 <div className="h-8 w-8 rounded-lg bg-[var(--foreground)] flex items-center justify-center text-[var(--background)] font-bold">DL</div>
+                 <span className="font-bold text-lg">Driver Leads</span>
               </div>
-              <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">
-                The most secure driver lead marketplace for US carriers. Verified profiles, pay-per-unlock access.
+              <p className="text-sm text-[var(--muted-foreground)]">
+                Connecting professional drivers with the best carriers in the USA.
               </p>
             </div>
-
+            
             <div>
-              <div className="font-bold text-[var(--foreground)] mb-6">Product</div>
+              <h4 className="font-bold mb-6">Platform</h4>
               <ul className="space-y-4 text-sm text-[var(--muted-foreground)]">
-                <li>
-                  <a className="hover:text-[var(--primary)] transition-colors" href="/drivers">
-                    Browse Drivers
-                  </a>
-                </li>
-                <li>
-                  <a className="hover:text-[var(--primary)] transition-colors" href="#features">
-                    Features
-                  </a>
-                </li>
-                <li>
-                  <a className="hover:text-[var(--primary)] transition-colors" href="#pricing">
-                    Pricing
-                  </a>
-                </li>
+                <li><a href="#benefits" className="hover:text-[var(--foreground)] transition-colors">Benefits</a></li>
+                <li><a href="#how-it-works" className="hover:text-[var(--foreground)] transition-colors">How it Works</a></li>
+                <li><a href="/drivers" className="hover:text-[var(--foreground)] transition-colors">Browse Drivers</a></li>
+                <li><a href="/join" className="hover:text-[var(--foreground)] transition-colors">Sign Up</a></li>
               </ul>
             </div>
 
             <div>
-              <div className="font-bold text-[var(--foreground)] mb-6">Company</div>
+              <h4 className="font-bold mb-6">Company</h4>
               <ul className="space-y-4 text-sm text-[var(--muted-foreground)]">
-                <li>
-                  <a className="hover:text-[var(--primary)] transition-colors" href="#">
-                    About Us
-                  </a>
-                </li>
-                <li>
-                  <a className="hover:text-[var(--primary)] transition-colors" href="#">
-                    Contact Support
-                  </a>
-                </li>
-                <li>
-                  <a className="hover:text-[var(--primary)] transition-colors" href="#">
-                    Careers
-                  </a>
-                </li>
+                <li><a href="#" className="hover:text-[var(--foreground)] transition-colors">About Us</a></li>
+                <li><a href="#" className="hover:text-[var(--foreground)] transition-colors">Contact</a></li>
+                <li><a href="#" className="hover:text-[var(--foreground)] transition-colors">Careers</a></li>
+                <li><a href="#" className="hover:text-[var(--foreground)] transition-colors">Blog</a></li>
               </ul>
             </div>
 
             <div>
-              <div className="font-bold text-[var(--foreground)] mb-6">Legal</div>
+              <h4 className="font-bold mb-6">Legal</h4>
               <ul className="space-y-4 text-sm text-[var(--muted-foreground)]">
-                <li>
-                  <a className="hover:text-[var(--primary)] transition-colors" href="#">
-                    Privacy Policy
-                  </a>
-                </li>
-                <li>
-                  <a className="hover:text-[var(--primary)] transition-colors" href="#">
-                    Terms of Service
-                  </a>
-                </li>
-                <li>
-                  <a className="hover:text-[var(--primary)] transition-colors" href="#">
-                    Cookie Policy
-                  </a>
-                </li>
+                <li><a href="#" className="hover:text-[var(--foreground)] transition-colors">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-[var(--foreground)] transition-colors">Terms of Service</a></li>
+                <li><a href="#" className="hover:text-[var(--foreground)] transition-colors">Cookie Policy</a></li>
               </ul>
             </div>
           </div>
 
-          <div className="pt-8 border-t border-[var(--border)] text-xs text-[var(--muted-foreground)] flex justify-between items-center">
+          <div className="pt-8 border-t border-[var(--border)] text-xs text-[var(--muted-foreground)] flex flex-col md:flex-row justify-between items-center gap-4">
             <span>© {new Date().getFullYear()} Driver Leads Inc. All rights reserved.</span>
             <div className="flex gap-4">
-              <div className="h-8 w-8 rounded-full bg-[var(--muted)] hover:bg-[var(--foreground)] transition-colors cursor-pointer" />
-              <div className="h-8 w-8 rounded-full bg-[var(--muted)] hover:bg-[var(--foreground)] transition-colors cursor-pointer" />
+               {/* Add social icons here if needed */}
             </div>
           </div>
         </div>
@@ -411,115 +561,68 @@ export default function Home() {
 
 /* --- Components --- */
 
-function Stat({ label, value }: { label: string; value: string }) {
+/* NEW REUSABLE ACTION BUTTON */
+function ActionBtn({ 
+  children, 
+  onClick, 
+  loading, 
+  variant = "primary", 
+  size = "md", 
+  badge,
+  arrow 
+}: any) {
+  
+  // Styles based on variant
+  const variants: any = {
+    primary: "bg-gradient-to-r from-emerald-500 to-emerald-400 text-white shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 border-transparent",
+    secondary: "bg-[var(--foreground)] text-[var(--background)] shadow-xl hover:bg-[var(--foreground)]/90 border-transparent",
+    outline: "bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--muted)] hover:border-[var(--foreground)]/20",
+    ghost: "bg-transparent text-[var(--foreground)] hover:bg-[var(--muted)] border-transparent"
+  }
+
+  // Styles based on size
+  const sizes: any = {
+    sm: "px-5 py-2.5 text-sm",
+    md: "px-8 py-3 text-base",
+    lg: "px-10 py-4 text-lg w-full sm:w-auto"
+  }
+
   return (
-    <div className="text-center">
-      <div className="text-2xl font-extrabold text-[var(--foreground)] tracking-tight">{value}</div>
-      <div className="text-xs text-[var(--muted-foreground)] font-medium uppercase tracking-wide mt-1">{label}</div>
-    </div>
-  )
-}
-
-function DealPrice({ price, note }: { price: string; note?: string }) {
-  return (
-    <span className="inline-flex flex-wrap items-center gap-2 align-middle">
-      <span className="relative inline-flex items-center">
-        {/* premium glow */}
-        <span className="absolute -inset-2 rounded-[22px] bg-emerald-500/20 blur-xl opacity-70 animate-pulse" />
-
-        {/* gradient border */}
-        <span className="absolute -inset-[2px] rounded-[20px] bg-gradient-to-r from-emerald-400/40 via-indigo-400/25 to-emerald-400/40 opacity-80" />
-
-        {/* shine sweep */}
-        <span className="absolute inset-0 rounded-[20px] overflow-hidden pointer-events-none">
-          <span className="absolute -left-1/2 top-0 h-full w-1/2 rotate-12 bg-white/20 blur-sm animate-[shine_2.8s_ease-in-out_infinite]" />
-        </span>
-
-        <span className="relative inline-flex items-center gap-3 px-4 py-2 rounded-[20px] bg-[var(--foreground)] text-[var(--background)] font-extrabold tracking-tight shadow-lg shadow-[var(--foreground)]/20 border border-[var(--foreground)]/10">
-          <span className="text-lg sm:text-xl">{price}</span>
-          <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider bg-[var(--background)]/14 px-2.5 py-1 rounded-full">
-            Deal
-          </span>
-        </span>
-      </span>
-
-      <span className="inline-flex items-center gap-2 text-sm sm:text-base text-[var(--muted-foreground)]">
-        <span className="line-through opacity-60">$29</span>
-        <span className="opacity-85">today</span>
-        {note ? (
-          <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border border-[var(--border)] bg-[var(--card)]">
-            {note}
-          </span>
-        ) : null}
-      </span>
-
-      <style jsx>{`
-        @keyframes shine {
-          0% {
-            transform: translateX(-120%) rotate(12deg);
-            opacity: 0;
-          }
-          25% {
-            opacity: 1;
-          }
-          55% {
-            opacity: 0.85;
-          }
-          100% {
-            transform: translateX(220%) rotate(12deg);
-            opacity: 0;
-          }
-        }
-      `}</style>
-    </span>
-  )
-}
-
-function FeatureCard({ title, desc, icon }: { title: string; desc: string; icon: string }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 14 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-10% 0px" }}
-      whileHover={{ y: -6 }}
-      transition={{ duration: 0.9, ease }}
-      className="group rounded-3xl bg-[var(--card)]/50 backdrop-blur-sm border border-[var(--border)] p-8 shadow-sm hover:shadow-xl hover:shadow-[var(--foreground)]/5 transition-all duration-500"
+    <motion.button
+      onClick={onClick}
+      disabled={loading}
+      whileHover={{ scale: 1.02, y: -2 }}
+      whileTap={{ scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+      className={`
+        relative rounded-2xl font-bold transition-all duration-300 flex items-center justify-center gap-3 border
+        ${variants[variant]} ${sizes[size]}
+        ${loading ? "opacity-80 cursor-not-allowed" : ""}
+      `}
     >
-      <div className="h-12 w-12 rounded-2xl bg-[var(--muted)] flex items-center justify-center mb-6 group-hover:bg-[var(--foreground)] group-hover:text-[var(--background)] transition-colors duration-500">
-        {icon === "eye" && (
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        )}
-        {icon === "lock" && (
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-          </svg>
-        )}
-        {icon === "shield" && (
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-          </svg>
-        )}
-        {icon === "card" && (
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
-          </svg>
-        )}
-        {icon === "clock" && (
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        )}
-        {icon === "chart" && (
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
-          </svg>
-        )}
-      </div>
-      <div className="text-xl font-bold text-[var(--foreground)] tracking-tight">{title}</div>
-      <p className="mt-3 text-[var(--muted-foreground)] leading-relaxed">{desc}</p>
+      {loading ? (
+        <span className={`h-5 w-5 border-2 rounded-full animate-spin border-t-transparent ${variant === 'outline' ? 'border-[var(--foreground)]' : 'border-[var(--background)]'}`} />
+      ) : (
+        <>
+          {children}
+          {arrow && <span className="text-xl leading-none mb-0.5">→</span>}
+          {badge && (
+            <span className="absolute -top-3 -right-3 bg-white text-emerald-600 text-[10px] font-black uppercase px-2 py-1 rounded-full shadow-sm border border-emerald-100 transform rotate-12">
+              {badge}
+            </span>
+          )}
+        </>
+      )}
+    </motion.button>
+  )
+}
+
+function ValueCard({icon, title, desc}: {icon: string, title: string, desc: string}) {
+  return (
+    <motion.div variants={fadeUp} className="text-center p-8 rounded-3xl bg-[var(--card)] border border-[var(--border)] hover:border-emerald-500/30 transition-colors">
+       <div className="text-5xl mb-6">{icon}</div>
+       <h3 className="text-xl font-bold mb-3 text-[var(--foreground)]">{title}</h3>
+       <p className="text-[var(--muted-foreground)] leading-relaxed">{desc}</p>
     </motion.div>
   )
 }
@@ -527,12 +630,10 @@ function FeatureCard({ title, desc, icon }: { title: string; desc: string; icon:
 function StepCard({ n, title, desc }: { n: string; title: string; desc: string }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 14 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-10% 0px" }}
+      variants={fadeUp}
       whileHover={{ y: -6 }}
-      transition={{ duration: 0.9, ease }}
-      className="relative rounded-3xl bg-[var(--background)] p-8 shadow-sm hover:shadow-2xl hover:shadow-[var(--foreground)]/5 transition-all duration-700 group z-10 border border-[var(--border)]"
+      transition={{ duration: 0.3 }}
+      className="relative rounded-3xl bg-[var(--background)] p-8 shadow-sm hover:shadow-2xl hover:shadow-[var(--foreground)]/5 transition-all duration-500 group z-10 border border-[var(--border)]"
     >
       <div className="flex items-center gap-4 mb-6">
         <div className="h-12 w-12 rounded-2xl bg-[var(--foreground)] text-[var(--background)] flex items-center justify-center font-bold text-xl shadow-lg group-hover:scale-110 transition-transform duration-500">
@@ -545,32 +646,12 @@ function StepCard({ n, title, desc }: { n: string; title: string; desc: string }
   )
 }
 
-function PricingCard({
-  title,
-  price,
-  sub,
-  bullets,
-  ctaText,
-  ctaHref,
-  highlight,
-  disabled,
-}: {
-  title: string
-  price: string
-  sub: string
-  bullets: string[]
-  ctaText: string
-  ctaHref: string
-  highlight?: boolean
-  disabled?: boolean
-}) {
+function PricingCard({ title, price, sub, bullets, ctaText, ctaHref, highlight, disabled }: any) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 14 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-10% 0px" }}
+      variants={fadeUp}
       whileHover={disabled ? {} : { y: -6 }}
-      transition={{ duration: 0.9, ease }}
+      transition={{ duration: 0.3 }}
       className={[
         "rounded-3xl p-8 transition-all duration-500 flex flex-col h-full relative overflow-hidden",
         highlight
@@ -592,7 +673,7 @@ function PricingCard({
       </div>
 
       <ul className="mt-8 space-y-4 text-sm flex-1">
-        {bullets.map((b) => (
+        {bullets.map((b: string) => (
           <li key={b} className="flex gap-3 items-start">
             <svg
               className={`w-5 h-5 flex-shrink-0 ${highlight ? "text-emerald-400" : "text-[var(--foreground)]"}`}
@@ -616,11 +697,10 @@ function PricingCard({
         ) : (
           <motion.a
             href={ctaHref}
-            whileHover={{ y: -2 }}
+            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            transition={{ duration: 0.9, ease }}
             className={[
-              "block w-full py-4 rounded-xl text-center text-sm font-bold transition-all duration-300 active:scale-95",
+              "block w-full py-4 rounded-xl text-center text-sm font-bold transition-all duration-300",
               highlight
                 ? "bg-[var(--background)] text-[var(--foreground)] hover:bg-white"
                 : "bg-[var(--foreground)] text-[var(--background)] hover:opacity-90 shadow-lg",

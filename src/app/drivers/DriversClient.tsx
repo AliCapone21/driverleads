@@ -19,6 +19,7 @@ type DriverRow = {
   experience_years: number
   endorsements: string[]
   created_at: string
+  status: string | null // <--- NEW FIELD
 }
 
 type TabType = "all" | "available" | "unlocked"
@@ -97,7 +98,7 @@ export default function DriversClient() {
       const { data, error } = await supabase
         .from("drivers")
         .select(
-          "id, first_name, last_initial, city, state, living_city, living_state, dob, driver_type, experience_years, endorsements, created_at"
+          "id, first_name, last_initial, city, state, living_city, living_state, dob, driver_type, experience_years, endorsements, created_at, status"
         )
         .order("created_at", { ascending: false })
 
@@ -498,9 +499,21 @@ function DriverCard({ data, isUnlocked }: { data: DriverRow; isUnlocked: boolean
               <h3 className="text-xl font-extrabold text-white tracking-tight group-hover:text-white transition-colors">
                 {data.first_name} {data.last_initial}.
               </h3>
+              
+              {/* STATUS BADGES */}
               {isUnlocked && (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-400/10 text-emerald-200 text-[10px] font-extrabold uppercase tracking-wider border border-emerald-400/20">
                   Unlocked
+                </span>
+              )}
+              {data.status === 'active' && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-500 text-black text-[10px] font-extrabold uppercase tracking-wider shadow-[0_0_10px_rgba(16,185,129,0.4)]">
+                  Ready to Hire
+                </span>
+              )}
+              {data.status === 'passive' && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 text-[10px] font-extrabold uppercase tracking-wider border border-indigo-500/30">
+                  Open to Offers
                 </span>
               )}
             </div>

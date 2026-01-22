@@ -15,8 +15,11 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Driver Leads",
-  description: "Unlock verified CDL driver contact details",
+  title: "Driver Leads - The Premium Driver Marketplace",
+  description: "Unlock verified CDL driver contact details instantly. No subscription fees for recruiters.",
+  icons: {
+    icon: "/favicon.ico",
+  },
 }
 
 export default function RootLayout({
@@ -25,8 +28,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
+    // suppressHydrationWarning is required for next-themes to work without errors
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        {/* Providers wrap the entire app */}
         <ThemeProvider>
           <NavigationProvider>
             <RouteLoader />

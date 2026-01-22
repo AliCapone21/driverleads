@@ -2,8 +2,6 @@
 
 /* -------------------------------------------------------
    Theme Tokens (Premium light/dark)
-   - Use RGB triplets so Tailwind arbitrary opacity works:
-     bg-[rgb(var(--background))/0.8], border-[rgb(var(--border))/0.6], etc.
 -------------------------------------------------------- */
 
 :root {
@@ -20,10 +18,10 @@
   --muted: 107 114 128;     /* gray-500 */
   --muted-2: 156 163 175;   /* gray-400 */
 
-  /* accents (optional) */
+  /* accents */
   --ring: 99 102 241;       /* indigo-500 */
 
-  /* shadows (just a helper value) */
+  /* shadows */
   --shadow: 17 24 39;
 }
 
@@ -50,19 +48,18 @@ body {
   color: rgb(var(--foreground));
 }
 
-/* Smooth theme transitions (nice “real” feel) */
+/* Smooth theme transitions */
 * {
   transition-property: background-color, color, border-color, fill, stroke, box-shadow;
   transition-duration: 180ms;
   transition-timing-function: ease;
 }
 
-/* Font */
 body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Your hero dots: adjust for both themes */
+/* Hero dots background */
 .hero-dots {
   background-image: radial-gradient(rgba(0, 0, 0, 0.10) 1px, transparent 1px);
   background-size: 18px 18px;

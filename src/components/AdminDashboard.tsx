@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { supabase } from "@/lib/supabaseClient"
+import { createClient } from "@/utils/supabase/client" // <--- CHANGED
 
 /* --- Types --- */
 type DriverRow = {
@@ -16,6 +16,9 @@ type DriverRow = {
 }
 
 export default function AdminDashboard() {
+  // Initialize dynamic client
+  const supabase = createClient()
+
   const [drivers, setDrivers] = useState<DriverRow[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -88,6 +91,7 @@ export default function AdminDashboard() {
     
     const token = await getToken()
     if (!token) {
+      // Logic handled by page.tsx, but good double check
       window.location.href = "/login"
       return
     }

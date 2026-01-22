@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
-import DriversClient from '../../components/DriversClient' // Ensure this path is correct
+import DriversClient from '../../components/DriversClient' 
 
-// Force dynamic rendering to prevent build errors with searchParams
+// Force dynamic rendering ensures the client component always mounts fresh
 export const dynamic = "force-dynamic" 
 
 export default function DriversPage() {

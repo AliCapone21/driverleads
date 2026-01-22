@@ -1,7 +1,6 @@
 import { Suspense } from "react"
 import SettingsClient from "../../../components/SettingsClient"
 
-// ⚠️ FIX: Force dynamic rendering to prevent build errors
 export const dynamic = "force-dynamic"
 
 export default function RecruiterSettingsPage() {

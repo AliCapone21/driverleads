@@ -1,50 +1,73 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabaseClient"
+import { createClient } from "@/utils/supabase/client" // <--- CHANGED
 import { useRouter } from "next/navigation"
 
 export default function DashboardContent() {
   const router = useRouter()
+  // Initialize the specific browser client
+  const supabase = createClient()
+
   const [profile, setProfile] = useState<any>(null)
   const [privateData, setPrivateData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let mounted = true
+
     async function loadProfile() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push("/login")
-        return
+      try {
+        // 1. Get User
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (!user) {
+          if (mounted) router.push("/login")
+          return
+        }
+
+        // 2. Get Public Driver Data
+        const { data: publicData, error } = await supabase
+          .from("drivers")
+          .select("*")
+          .eq("user_id", user.id)
+          .single()
+
+        if (error || !publicData) {
+          console.error("Profile load error:", error)
+          if (mounted) setLoading(false)
+          return
+        }
+
+        // 3. Get Private Data
+        // (Note: Ideally this table should also be queried by user_id for security, 
+        // but we keep your current logic of querying by driver_id)
+        const { data: priv } = await supabase
+          .from("driver_private")
+          .select("*")
+          .eq("driver_id", publicData.id)
+          .single()
+        
+        if (mounted) {
+          setPrivateData(priv)
+          setProfile(publicData)
+          setLoading(false)
+        }
+      } catch (err) {
+        console.error("Unexpected error:", err)
+        if (mounted) setLoading(false)
       }
-
-      const { data: publicData, error } = await supabase
-        .from("drivers")
-        .select("*")
-        .eq("user_id", user.id)
-        .single()
-
-      if (error || !publicData) {
-        console.error("Profile load error:", error)
-        setLoading(false)
-        return
-      }
-
-      const { data: priv } = await supabase
-        .from("driver_private")
-        .select("*")
-        .eq("driver_id", publicData.id)
-        .single()
-      
-      setPrivateData(priv)
-      setProfile(publicData)
-      setLoading(false)
     }
+
     loadProfile()
-  }, [router])
+    
+    return () => { mounted = false }
+  }, [supabase, router])
 
   const updateStatus = async (newStatus: string) => {
     if (!profile) return
+    
+    // Optimistic Update (update UI instantly)
     setProfile({ ...profile, status: newStatus })
     
     const { error } = await supabase
@@ -54,8 +77,17 @@ export default function DashboardContent() {
 
     if (error) {
       console.error("Error updating status:", error)
+      // Revert if failed
       alert("Failed to update status")
+    } else {
+        router.refresh() // Keep server data in sync
     }
+  }
+
+  const handleSignOut = async () => {
+      await supabase.auth.signOut()
+      router.refresh()
+      router.push("/")
   }
 
   if (loading) return (
@@ -77,7 +109,7 @@ export default function DashboardContent() {
             <p className="text-white/50 mt-1">Manage your availability and view offers.</p>
           </div>
           <button 
-            onClick={() => supabase.auth.signOut().then(() => router.push("/"))} 
+            onClick={handleSignOut} 
             className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-sm font-bold transition-colors"
           >
             Sign Out

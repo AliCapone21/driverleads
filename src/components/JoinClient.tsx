@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"
 import { motion, AnimatePresence, Variants } from "framer-motion"
-import { supabase } from "@/lib/supabaseClient"
+import { createClient } from "@/utils/supabase/client" // <--- CHANGED
 import { useRouter } from "next/navigation"
 
 /* --- Animation Settings --- */
@@ -16,6 +16,9 @@ const fadeUp: Variants = {
 
 export default function JoinClient() {
   const router = useRouter()
+  // Initialize Supabase Client
+  const supabase = createClient()
+
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
 
@@ -111,6 +114,7 @@ export default function JoinClient() {
       alert("Profile created, but contact info failed: " + privateError.message)
       setLoading(false)
     } else {
+      router.refresh()
       router.push("/drivers/dashboard")
     }
   }
@@ -194,11 +198,11 @@ export default function JoinClient() {
                 <div className="pt-4">
                     <button 
                      onClick={nextStep}
-                    disabled={!formData.first_name || !formData.last_name || !formData.email || formData.password.length < 6}
-                    className="w-full py-4 rounded-xl bg-white text-black font-bold text-lg hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                   >
-                     Next Step
-                   </button>
+                     disabled={!formData.first_name || !formData.last_name || !formData.email || formData.password.length < 6}
+                     className="w-full py-4 rounded-xl bg-white text-black font-bold text-lg hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      Next Step
+                    </button>
                 </div>
               </div>
             </motion.div>

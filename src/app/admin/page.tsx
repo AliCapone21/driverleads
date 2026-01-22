@@ -1,10 +1,25 @@
 import { Suspense } from "react"
-import AdminDashboard from "@/components/AdminDashboard" // Make sure this path matches where you put the file in Step 1
+import AdminDashboard from "@/components/AdminDashboard"
+import { createClient } from "@/utils/supabase/server" // <--- NEW
+import { redirect } from "next/navigation" // <--- NEW
 
-// Force this page to be dynamic server-side rendered
+// Force dynamic server rendering
 export const dynamic = "force-dynamic"
 
-export default function AdminPage() {
+export default async function AdminPage() {
+    // 🔒 SECURITY STEP: Check if user is logged in on the server
+    const supabase = await createClient()
+    const { data: { user }, error } = await supabase.auth.getUser()
+
+    if (error || !user) {
+        redirect("/login")
+    }
+
+    // 🔒 OPTIONAL: Restrict to specific email only (Uncomment to enable)
+    // if (user.email !== "your-email@example.com") {
+    //   redirect("/") // Kick non-admins back to home
+    // }
+
     return (
         <main className="min-h-screen bg-[#F8FAFC] text-gray-900 relative font-sans selection:bg-black selection:text-white pb-20">
             {/* Background */}
@@ -26,7 +41,6 @@ export default function AdminPage() {
                 </div>
             </header>
 
-            {/* This Suspense boundary is the fix for the build error */}
             <Suspense fallback={
                 <div className="min-h-[500px] flex items-center justify-center">
                     <div className="flex flex-col items-center gap-3">

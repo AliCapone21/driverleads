@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState, useRef } from "react"
-import { supabase } from "@/lib/supabaseClient"
+import { createClient } from "@/utils/supabase/client" // <--- CHANGED
 import { useRouter, useSearchParams } from "next/navigation"
 import { AnimatePresence, motion } from "framer-motion"
 
@@ -44,6 +44,8 @@ const ease: [number, number, number, number] = [0.22, 1, 0.36, 1]
 export default function DriversClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  // Initialize the browser-safe client
+  const supabase = createClient()
 
   const [drivers, setDrivers] = useState<DriverRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -91,7 +93,6 @@ export default function DriversClient() {
 
       try {
         // 1. Race Auth Check against a 2-second timeout
-        // This prevents the page from spinning forever if Supabase is blocked
         const { data: sessionData } = await Promise.race([
             supabase.auth.getSession(),
             new Promise((_, resolve) => setTimeout(() => resolve({ data: { session: null } }), 2000))
@@ -136,7 +137,7 @@ export default function DriversClient() {
     load()
 
     return () => { mounted = false }
-  }, [])
+  }, [supabase]) // Added supabase dependency
 
   // Filter Logic
   const filtered = useMemo(() => {
@@ -186,8 +187,8 @@ export default function DriversClient() {
 
   async function signOut() {
     await supabase.auth.signOut()
-    // Hard refresh to ensure session is cleared from all components
-    window.location.href = "/"
+    router.refresh() // Clear server cookies/cache
+    router.push("/") // Navigate securely
   }
 
   return (

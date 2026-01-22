@@ -1,37 +1,56 @@
 "use client"
 
 import { useState } from "react"
-import { supabase } from "@/lib/supabaseClient"
+import { createClient } from "@/utils/supabase/client" // <--- NEW IMPORT
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { motion } from "framer-motion"
+import { useRouter } from "next/navigation" // <--- NEW IMPORT
 
 const ease: [number, number, number, number] = [0.22, 1, 0.36, 1]
 
 export default function LoginClient() {
+  const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [msg, setMsg] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
+  // Initialize the client strictly for the browser
+  const supabase = createClient() 
+
   async function signUp() {
     setLoading(true)
     setMsg(null)
-    const { error } = await supabase.auth.signUp({ email, password })
+    const { error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+            emailRedirectTo: `${location.origin}/auth/callback` // Best practice for verification
+        }
+    })
     setLoading(false)
     if (error) setMsg(error.message)
-    else setMsg("Account created! Please check your email or try logging in.")
+    else setMsg("Account created! Please check your email.")
   }
 
   async function signIn() {
     setLoading(true)
     setMsg(null)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    
+    const { error } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
+    })
+
     if (error) {
       setLoading(false)
       setMsg(error.message)
     } else {
-      window.location.href = "/drivers"
+      // 1. Refresh allows Server Components (like Layout) to see the new cookie
+      router.refresh() 
+      // 2. Then we navigate to the drivers page
+      router.push("/drivers") 
     }
   }
 

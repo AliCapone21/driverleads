@@ -1,14 +1,16 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabaseClient"
+import { createClient } from "@/utils/supabase/client" // <--- CHANGED
 import { useRouter } from "next/navigation"
 
 export default function SettingsClient() {
   const router = useRouter()
+  // Initialize the browser-safe client
+  const supabase = createClient()
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  // Start loading as true so we don't show empty fields while fetching
   const [loading, setLoading] = useState(true) 
   const [message, setMessage] = useState<string | null>(null)
 
@@ -17,34 +19,28 @@ export default function SettingsClient() {
 
     async function load() {
       try {
-        // ⚡️ FIX: Race Supabase against a 2-second timeout to prevent hanging
-        const { data } = await Promise.race([
-          supabase.auth.getUser(),
-          new Promise((_, reject) => setTimeout(() => reject("Timeout"), 2000))
-        ]) as any
+        // With middleware in place, getUser() is now fast and reliable
+        const { data: { user }, error } = await supabase.auth.getUser()
 
         if (!mounted) return
 
-        if (data?.user) {
-          setEmail(data.user.email ?? "")
+        if (user) {
+          setEmail(user.email ?? "")
         } else {
-          // If strictly no user found, redirect
+          // If the server/middleware missed it, the client catches it here
           router.push("/login") 
         }
       } catch (err) {
-        // Fallback: If getUser times out, check session directly
-        const { data } = await supabase.auth.getSession()
-        if (data.session?.user) {
-           setEmail(data.session.user.email ?? "")
-        }
+        console.error("Auth check failed", err)
       } finally {
         if (mounted) setLoading(false)
       }
     }
+    
     load()
     
     return () => { mounted = false }
-  }, [router])
+  }, [supabase, router])
 
   const handleUpdate = async () => {
     setLoading(true)
@@ -60,13 +56,18 @@ export default function SettingsClient() {
 
     const { error } = await supabase.auth.updateUser(updates)
 
-    if (error) setMessage("Error: " + error.message)
-    else setMessage("Success! Credentials updated.")
+    if (error) {
+      setMessage("Error: " + error.message)
+    } else {
+      setMessage("Success! Credentials updated.")
+      setPassword("") // Clear password field on success
+      router.refresh() // Sync server state
+    }
     
     setLoading(false)
   }
 
-  // Show a loading spinner while we fetch the email to prevent "empty" UI
+  // Show a loading spinner while we fetch the email
   if (loading && !email) return (
     <div className="min-h-screen bg-[#070A12] text-white flex items-center justify-center">
         <div className="animate-pulse flex flex-col items-center gap-4">

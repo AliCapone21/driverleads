@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { AnimatePresence, motion } from "framer-motion"
-import { supabase } from "@/lib/supabaseClient"
+import { createClient } from "@/utils/supabase/client" // <--- CHANGED THIS
 import { User } from "@supabase/supabase-js"
 import { useRouter } from "next/navigation"
 
@@ -20,12 +20,15 @@ const stagger = {
 
 export default function HomeClient() {
   const router = useRouter()
+  // Initialize the specific browser client for this component instance
+  const supabase = createClient() 
+
   const [isScrolled, setIsScrolled] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [isDriver, setIsDriver] = useState(false) 
   const [menuOpen, setMenuOpen] = useState(false)
   const [navigating, setNavigating] = useState(false) 
-   
+    
   // Controls visibility of buttons
   const [authReady, setAuthReady] = useState(false)
 
@@ -36,7 +39,6 @@ export default function HomeClient() {
     const checkUser = async () => {
       try {
         // ⚡️ FIX 1: Race Supabase against a 3-second timeout
-        // If Supabase hangs (network/adblocker), we abort and show logged-out state
         const { data } = await Promise.race([
           supabase.auth.getUser(),
           new Promise((_, reject) => setTimeout(() => reject("Timeout"), 3000))
@@ -92,10 +94,9 @@ export default function HomeClient() {
       window.removeEventListener("scroll", handleWindowScroll)
       authListener.subscription.unsubscribe()
     }
-  }, [])
+  }, [supabase]) // Added supabase as dependency
 
   // ⚡️ FIX 2: Optimistic Sign Out
-  // We clear the state IMMEDIATELY so the user doesn't wait for the server
   const handleSignOut = async () => {
     setNavigating(true)
     
@@ -257,10 +258,10 @@ export default function HomeClient() {
                     Log In
                   </button>
                   <ActionBtn 
-                     onClick={() => handleNav("/join")} 
-                     loading={navigating} 
-                     variant="primary"
-                     size="sm"
+                      onClick={() => handleNav("/join")} 
+                      loading={navigating} 
+                      variant="primary"
+                      size="sm"
                   >
                     Driver Sign Up
                   </ActionBtn>

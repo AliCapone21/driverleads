@@ -1,39 +1,25 @@
 import { NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe"
-import { createClient } from "@supabase/supabase-js"
+import { createClient } from "@/utils/supabase/server" // <--- User session (Cookies)
 
 export async function POST(req: Request) {
   try {
-    const { driverId, accessToken } = (await req.json()) as {
-      driverId?: string
-      accessToken?: string
+    // 1. Verify User
+    const supabase = await createClient()
+    const { data: { user }, error: userErr } = await supabase.auth.getUser()
+
+    if (userErr || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    if (!driverId) {
-      return NextResponse.json({ error: "Missing driverId" }, { status: 400 })
-    }
-    if (!accessToken) {
-      return NextResponse.json({ error: "Missing accessToken" }, { status: 401 })
-    }
+    // 2. Parse Body
+    const { driverId } = (await req.json()) as { driverId?: string }
+    if (!driverId) return NextResponse.json({ error: "Missing driverId" }, { status: 400 })
 
-    // Supabase client with user JWT so we can read user identity
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        global: { headers: { Authorization: `Bearer ${accessToken}` } },
-      }
-    )
+    const userId = user.id
+    const userEmail = user.email
 
-    const { data: userData, error: userErr } = await supabase.auth.getUser()
-    if (userErr || !userData?.user) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 })
-    }
-
-    const userId = userData.user.id
-    const userEmail = userData.user.email ?? undefined
-
-    // Guard: Check if already unlocked
+    // 3. Guard: Check if already unlocked
     const { data: existing } = await supabase
       .from("unlocks")
       .select("id")
@@ -42,23 +28,20 @@ export async function POST(req: Request) {
       .maybeSingle()
     
     if (existing) {
-      return NextResponse.json(
-        { error: "Already unlocked" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "You have already unlocked this driver." }, { status: 400 })
     }
 
-    // ✅ FIXED: Using STRIPE_PRICE_ID and NEXT_PUBLIC_SITE_URL
+    // 4. Create Stripe Session
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: userEmail,
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_ID, // Use the ID you just created
+          price: process.env.STRIPE_PRICE_ID, // Ensure this ENV var is set in Vercel!
           quantity: 1,
         },
       ],
-      // Make sure this variable matches your Vercel Env Var
+      // Dynamic success/cancel URLs
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/drivers/${driverId}?paid=1`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/drivers/${driverId}?canceled=1`,
       metadata: {
@@ -67,9 +50,14 @@ export async function POST(req: Request) {
       },
     })
 
+    if (!session.url) {
+        throw new Error("Stripe failed to return a session URL.")
+    }
+
     return NextResponse.json({ url: session.url })
-  } catch (error) {
+
+  } catch (error: any) {
     console.error("Checkout Error:", error)
-    return NextResponse.json({ error: "Failed to create checkout" }, { status: 400 })
+    return NextResponse.json({ error: error.message || "Failed to create checkout" }, { status: 500 })
   }
 }

@@ -2,11 +2,17 @@ import { NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe"
 import { createClient } from "@supabase/supabase-js"
 
+// Initialize Admin Client outside the handler for better performance (Cold Starts)
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
 export async function POST(req: Request) {
   const sig = req.headers.get("stripe-signature")
   if (!sig) return NextResponse.json({ error: "Missing signature" }, { status: 400 })
 
-  // ✅ FIXED: Use req.text() for reliable signature verification
+  // ✅ Read raw body text for signature verification
   const body = await req.text()
 
   let event
@@ -16,8 +22,8 @@ export async function POST(req: Request) {
       sig,
       process.env.STRIPE_WEBHOOK_SECRET!
     )
-  } catch (err) {
-    console.error("Webhook Signature Error:", err)
+  } catch (err: any) {
+    console.error("Webhook Signature Error:", err.message)
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 })
   }
 
@@ -29,12 +35,7 @@ export async function POST(req: Request) {
     const paymentIntent = session?.payment_intent as string | undefined
 
     if (driverId && userId) {
-      // Use service role to bypass RLS in webhook (server-to-server)
-      const supabaseAdmin = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      )
-
+      // Upsert the unlock record using the Service Role (Bypassing RLS)
       const { error } = await supabaseAdmin.from("unlocks").upsert(
         {
           user_id: userId,
@@ -44,7 +45,11 @@ export async function POST(req: Request) {
         { onConflict: "user_id,driver_id" }
       )
       
-      if (error) console.error("Supabase Write Error:", error)
+      // ⚠️ CRITICAL: Return 500 if DB fails so Stripe retries later
+      if (error) {
+        console.error("Supabase Write Error:", error)
+        return NextResponse.json({ error: "Database write failed" }, { status: 500 })
+      }
     }
   }
 

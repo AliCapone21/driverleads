@@ -1,9 +1,6 @@
 import { Suspense } from "react"
 import LoginClient from "../../components/LoginClient"
 
-// ⚠️ FIX: Force dynamic rendering to fix build
-export const dynamic = "force-dynamic"
-
 export default function LoginPage() {
   return (
     <Suspense fallback={

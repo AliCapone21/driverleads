@@ -1,10 +1,14 @@
 "use client"
 
-import { useEffect, useState } from "react"
+// ⚠️ FIX: Force this page to render on the server/client dynamically, not statically.
+export const dynamic = "force-dynamic"
+
+import { useEffect, useState, Suspense } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 
-export default function DriverDashboard() {
+/* --- 1. Internal Component for Logic --- */
+function DashboardContent() {
   const router = useRouter()
   const [profile, setProfile] = useState<any>(null)
   const [privateData, setPrivateData] = useState<any>(null)
@@ -75,9 +79,7 @@ export default function DriverDashboard() {
   )
 
   return (
-    <main className="min-h-screen bg-[#070A12] text-white p-6 md:p-12 font-sans selection:bg-emerald-500/30">
-      <div className="max-w-4xl mx-auto">
-        
+    <div className="max-w-4xl mx-auto">
         {/* Header */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-12 border-b border-white/10 pb-8">
           <div>
@@ -191,7 +193,23 @@ export default function DriverDashboard() {
           </div>
 
         </div>
-      </div>
+    </div>
+  )
+}
+
+/* --- 2. Default Export (Wrapper) --- */
+export default function DriverDashboard() {
+  return (
+    <main className="min-h-screen bg-[#070A12] text-white p-6 md:p-12 font-sans selection:bg-emerald-500/30">
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-pulse flex flex-col items-center gap-4">
+             <div className="h-12 w-12 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
+          </div>
+        </div>
+      }>
+        <DashboardContent />
+      </Suspense>
     </main>
   )
 }

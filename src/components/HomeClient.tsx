@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { AnimatePresence, motion } from "framer-motion"
-import { createClient } from "@/utils/supabase/client" // <--- CHANGED THIS
+import { createClient } from "@/utils/supabase/client" 
 import { User } from "@supabase/supabase-js"
 import { useRouter } from "next/navigation"
 
@@ -38,7 +38,7 @@ export default function HomeClient() {
 
     const checkUser = async () => {
       try {
-        // ⚡️ FIX 1: Race Supabase against a 3-second timeout
+        // Race Supabase against a 3-second timeout
         const { data } = await Promise.race([
           supabase.auth.getUser(),
           new Promise((_, reject) => setTimeout(() => reject("Timeout"), 3000))
@@ -94,23 +94,18 @@ export default function HomeClient() {
       window.removeEventListener("scroll", handleWindowScroll)
       authListener.subscription.unsubscribe()
     }
-  }, [supabase]) // Added supabase as dependency
+  }, [supabase]) 
 
-  // ⚡️ FIX 2: Optimistic Sign Out
+  // ⚡️ FIX: Hard Refresh on Sign Out
+  // This forces the browser to reload the page from scratch, ensuring a clean "Logged Out" state.
   const handleSignOut = async () => {
-    setNavigating(true)
+    setNavigating(true) // Show spinner on button
     
-    // 1. Clear UI immediately
-    setMenuOpen(false)
-    setUser(null)
-    setIsDriver(false)
-
-    // 2. Perform network request in background
+    // 1. Perform network request
     await supabase.auth.signOut()
     
-    // 3. Refresh to clear cookies/cache
-    router.refresh()
-    setNavigating(false)
+    // 2. Hard Refresh (Reloads the page)
+    window.location.reload()
   }
 
   const handleNav = (url: string) => {

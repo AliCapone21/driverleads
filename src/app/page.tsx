@@ -1,6 +1,10 @@
 import { Suspense } from "react"
 import HomeClient from "@/components/HomeClient"
 
+// ✅ FIX: Restore this line. 
+// It prevents the build error by telling Next.js "Don't try to build this as static HTML."
+export const dynamic = "force-dynamic"
+
 export default function Home() {
   return (
     <Suspense fallback={

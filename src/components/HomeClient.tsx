@@ -35,8 +35,8 @@ export default function HomeClient() {
 
     const checkUser = async () => {
       try {
-        // ⚡️ FIX: Race Supabase against a 3-second timeout
-        // If Supabase hangs (due to adblockers/network), we give up and show the page.
+        // ⚡️ FIX 1: Race Supabase against a 3-second timeout
+        // If Supabase hangs (network/adblocker), we abort and show logged-out state
         const { data } = await Promise.race([
           supabase.auth.getUser(),
           new Promise((_, reject) => setTimeout(() => reject("Timeout"), 3000))
@@ -94,12 +94,20 @@ export default function HomeClient() {
     }
   }, [])
 
+  // ⚡️ FIX 2: Optimistic Sign Out
+  // We clear the state IMMEDIATELY so the user doesn't wait for the server
   const handleSignOut = async () => {
     setNavigating(true)
-    await supabase.auth.signOut()
+    
+    // 1. Clear UI immediately
     setMenuOpen(false)
     setUser(null)
     setIsDriver(false)
+
+    // 2. Perform network request in background
+    await supabase.auth.signOut()
+    
+    // 3. Refresh to clear cookies/cache
     router.refresh()
     setNavigating(false)
   }

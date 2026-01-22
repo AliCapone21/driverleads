@@ -8,16 +8,42 @@ export default function SettingsClient() {
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
+  // Start loading as true so we don't show empty fields while fetching
+  const [loading, setLoading] = useState(true) 
   const [message, setMessage] = useState<string | null>(null)
 
   useEffect(() => {
+    let mounted = true
+
     async function load() {
-      const { data } = await supabase.auth.getUser()
-      if (data.user) setEmail(data.user.email ?? "")
-      else router.push("/login")
+      try {
+        // ⚡️ FIX: Race Supabase against a 2-second timeout to prevent hanging
+        const { data } = await Promise.race([
+          supabase.auth.getUser(),
+          new Promise((_, reject) => setTimeout(() => reject("Timeout"), 2000))
+        ]) as any
+
+        if (!mounted) return
+
+        if (data?.user) {
+          setEmail(data.user.email ?? "")
+        } else {
+          // If strictly no user found, redirect
+          router.push("/login") 
+        }
+      } catch (err) {
+        // Fallback: If getUser times out, check session directly
+        const { data } = await supabase.auth.getSession()
+        if (data.session?.user) {
+           setEmail(data.session.user.email ?? "")
+        }
+      } finally {
+        if (mounted) setLoading(false)
+      }
     }
     load()
+    
+    return () => { mounted = false }
   }, [router])
 
   const handleUpdate = async () => {
@@ -39,6 +65,16 @@ export default function SettingsClient() {
     
     setLoading(false)
   }
+
+  // Show a loading spinner while we fetch the email to prevent "empty" UI
+  if (loading && !email) return (
+    <div className="min-h-screen bg-[#070A12] text-white flex items-center justify-center">
+        <div className="animate-pulse flex flex-col items-center gap-4">
+           <div className="h-10 w-10 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+           <p className="text-white/50 text-xs">Verifying Access...</p>
+        </div>
+    </div>
+  )
 
   return (
     <main className="min-h-screen bg-[#070A12] text-white p-6 md:p-12 font-sans flex items-center justify-center">
@@ -85,7 +121,7 @@ export default function SettingsClient() {
               {loading ? "Updating..." : "Save Changes"}
             </button>
             <button 
-              onClick={() => router.push("/drivers")}
+              onClick={() => router.push("/drivers")} 
               className="w-full py-3 rounded-xl bg-transparent border border-white/10 text-white font-bold hover:bg-white/5 transition-colors"
             >
               Back to Marketplace

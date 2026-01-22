@@ -19,7 +19,7 @@ type DriverRow = {
   experience_years: number
   endorsements: string[]
   created_at: string
-  status: string | null // <--- NEW FIELD
+  status: string | null
 }
 
 type TabType = "all" | "available" | "unlocked"
@@ -81,33 +81,61 @@ export default function DriversClient() {
     setCurrentPage(1)
   }, [typeFilter, minExp, ageMin, ageMax, query, sortBy])
 
+  // --- UPDATED LOADING LOGIC WITH TIMEOUT SAFETY ---
   useEffect(() => {
+    let mounted = true
+
     async function load() {
       setLoading(true)
       setError(null)
 
-      const { data: sessionData } = await supabase.auth.getSession()
-      setSessionEmail(sessionData.session?.user.email ?? null)
-      const userId = sessionData.session?.user.id
+      try {
+        // 1. Race Auth Check against a 2-second timeout
+        // This prevents the page from spinning forever if Supabase is blocked
+        const { data: sessionData } = await Promise.race([
+            supabase.auth.getSession(),
+            new Promise((_, resolve) => setTimeout(() => resolve({ data: { session: null } }), 2000))
+        ]) as any
 
-      if (userId) {
-        const { data: unlockRows } = await supabase.from("unlocks").select("driver_id").eq("user_id", userId)
-        setUnlockedIds(new Set((unlockRows ?? []).map((r) => r.driver_id)))
+        if (!mounted) return
+
+        const session = sessionData?.session
+        const userId = session?.user?.id
+        setSessionEmail(session?.user?.email ?? null)
+
+        // 2. Fetch Unlocks (Only if user exists)
+        if (userId) {
+          const { data: unlockRows } = await supabase
+            .from("unlocks")
+            .select("driver_id")
+            .eq("user_id", userId)
+          
+          if (mounted) {
+             setUnlockedIds(new Set((unlockRows ?? []).map((r) => r.driver_id)))
+          }
+        }
+
+        // 3. Fetch Drivers
+        const { data, error } = await supabase
+          .from("drivers")
+          .select(
+            "id, first_name, last_initial, city, state, living_city, living_state, dob, driver_type, experience_years, endorsements, created_at, status"
+          )
+          .order("created_at", { ascending: false })
+
+        if (error) throw error
+        if (mounted) setDrivers(data ?? [])
+
+      } catch (err: any) {
+        console.error("Load failed", err)
+        if (mounted) setError(err.message)
+      } finally {
+        if (mounted) setLoading(false)
       }
-
-      const { data, error } = await supabase
-        .from("drivers")
-        .select(
-          "id, first_name, last_initial, city, state, living_city, living_state, dob, driver_type, experience_years, endorsements, created_at, status"
-        )
-        .order("created_at", { ascending: false })
-
-      if (error) setError(error.message)
-      else setDrivers(data ?? [])
-
-      setLoading(false)
     }
     load()
+
+    return () => { mounted = false }
   }, [])
 
   // Filter Logic
@@ -158,6 +186,7 @@ export default function DriversClient() {
 
   async function signOut() {
     await supabase.auth.signOut()
+    // Hard refresh to ensure session is cleared from all components
     window.location.href = "/"
   }
 

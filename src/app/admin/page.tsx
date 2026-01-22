@@ -1,5 +1,9 @@
 "use client"
 
+// ⚠️ THIS FIXES THE BUILD ERROR
+// It tells Next.js: "Don't try to build this page statically. It's a dynamic admin dashboard."
+export const dynamic = "force-dynamic"
+
 import { useEffect, useState, useRef, Suspense } from "react"
 import { supabase } from "@/lib/supabaseClient"
 
@@ -15,9 +19,7 @@ type DriverRow = {
   created_at: string
 }
 
-/* 1. WE MOVE THE LOGIC INTO THIS INNER COMPONENT 
-     This isolates the client-side logic so we can wrap it in Suspense below.
-*/
+/* --- Internal Component for Logic --- */
 function AdminDashboardContent() {
   const [drivers, setDrivers] = useState<DriverRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -33,7 +35,7 @@ function AdminDashboardContent() {
     experience_years: "",
     endorsements: "",
     driver_type: "company",
-    dob: "", // Managed as DD/MM/YYYY for UI
+    dob: "",
     living_city: "",
     living_state: "",
     phone: "",
@@ -43,13 +45,10 @@ function AdminDashboardContent() {
   })
 
   // --- Helpers ---
-
-  // Phone Formatter: +1 (XXX) XXX-XXXX
   const handlePhoneChange = (val: string) => {
     const digits = val.replace(/\D/g, "")
     let formatted = digits
     if (digits.length > 0) {
-        // If starts with 1, strip it to normalize logic (we force +1)
         const d = digits.startsWith('1') ? digits.slice(1) : digits
         const limited = d.slice(0, 10)
         
@@ -67,7 +66,6 @@ function AdminDashboardContent() {
   }
 
   // --- API Actions ---
-
   async function getToken() {
     const { data } = await supabase.auth.getSession()
     return data.session?.access_token ?? null
@@ -101,14 +99,12 @@ function AdminDashboardContent() {
 
     const endorsements = form.endorsements.split(",").map((s) => s.trim()).filter(Boolean)
 
-    // CONVERT DATE: DD/MM/YYYY -> YYYY-MM-DD for Database
     let dbDate = null
     if (form.dob && form.dob.length === 10) {
         const [day, month, year] = form.dob.split('/')
         dbDate = `${year}-${month}-${day}`
     }
 
-    // 1. Create Record
     const res = await fetch("/api/admin/driver", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -121,7 +117,7 @@ function AdminDashboardContent() {
         experience_years: form.experience_years || "0",
         endorsements: endorsements,
         driver_type: form.driver_type,
-        dob: dbDate, // Send converted date
+        dob: dbDate,
         living_city: form.living_city,
         living_state: form.living_state,
         phone: form.phone,
@@ -138,7 +134,6 @@ function AdminDashboardContent() {
       return
     }
 
-    // 2. Upload File
     if (form.cdl_file) {
         const fd = new FormData()
         fd.append("accessToken", token)
@@ -161,7 +156,6 @@ function AdminDashboardContent() {
     }
 
     setSubmitting(false)
-    // Reset Form
     setForm({
       first_name: "", last_initial: "", city: "", state: "", experience_years: "", endorsements: "",
       driver_type: "company", dob: "", living_city: "", living_state: "", phone: "", email: "",
@@ -206,7 +200,6 @@ function AdminDashboardContent() {
 
         <div className="grid lg:grid-cols-12 gap-8 items-start">
             
-            {/* Create Form */}
             <div className="lg:col-span-4 lg:sticky lg:top-24">
                 <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
                     <div className="p-6 border-b border-gray-50 bg-gray-50/30">
@@ -255,7 +248,6 @@ function AdminDashboardContent() {
                                 <span className="text-[10px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-bold border border-amber-100">PRIVATE</span>
                              </div>
                              
-                             {/* Custom Date Picker */}
                              <CustomDatePicker 
                                 label="Date of Birth"
                                 value={form.dob}
@@ -267,7 +259,6 @@ function AdminDashboardContent() {
                                 <Input label="Living State" placeholder="TX" value={form.living_state} onChange={v => setForm({...form, living_state: v})} />
                              </div>
 
-                             {/* Phone Input with Mask */}
                              <Input 
                                 label="Phone Number" 
                                 placeholder="+1 (555) 000-0000" 
@@ -303,7 +294,6 @@ function AdminDashboardContent() {
                 </div>
             </div>
 
-            {/* List */}
             <div className="lg:col-span-8">
                 <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 flex flex-col min-h-[600px] overflow-hidden">
                     <div className="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
@@ -380,10 +370,7 @@ function AdminDashboardContent() {
   )
 }
 
-/* 2. THIS IS NOW THE DEFAULT EXPORT 
-     It renders the static layout parts (background, header) 
-     and WRAPS the Dashboard Content in Suspense.
-*/
+/* --- Default Export with Suspense --- */
 export default function AdminPage() {
     return (
         <main className="min-h-screen bg-[#F8FAFC] text-gray-900 relative font-sans selection:bg-black selection:text-white pb-20">
@@ -406,7 +393,7 @@ export default function AdminPage() {
                 </div>
             </header>
 
-            {/* !!! SUSPENSE BOUNDARY FIXES THE BUILD ERROR !!! */}
+            {/* Suspense Boundary */}
             <Suspense fallback={
                 <div className="min-h-[500px] flex items-center justify-center">
                     <div className="flex flex-col items-center gap-3">
@@ -553,7 +540,6 @@ function CustomDatePicker({ label, value, onChange }: { label: string, value: st
     return (
         <div className="relative" ref={ref}>
              <label className="block text-xs font-bold text-gray-500 mb-1.5 ml-1">{label}</label>
-             {/* TRIGGER IS NOW AN INPUT (WRITABLE) */}
              <div className="relative">
                 <input
                     type="text"
@@ -574,7 +560,6 @@ function CustomDatePicker({ label, value, onChange }: { label: string, value: st
 
              {isOpen && (
                 <div className="absolute top-full mt-2 left-0 w-[280px] bg-white border border-gray-100 rounded-2xl shadow-xl z-50 p-4 animate-in fade-in zoom-in-95">
-                    {/* Header with Year Select */}
                     <div className="flex items-center justify-between mb-4">
                         <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-gray-100 rounded-lg text-gray-500">
                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
@@ -582,7 +567,6 @@ function CustomDatePicker({ label, value, onChange }: { label: string, value: st
                         
                         <div className="flex items-center gap-1">
                             <span className="text-sm font-bold text-gray-900">{months[currentMonth]}</span>
-                            {/* Year Select Dropdown */}
                             <select 
                                 value={currentYear} 
                                 onChange={(e) => changeYear(Number(e.target.value))}

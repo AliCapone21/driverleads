@@ -31,11 +31,20 @@ export default function HomeClient() {
 
   // 1. Check Login Status on Mount
   useEffect(() => {
+    let mounted = true
+
     const checkUser = async () => {
       try {
-        const { data } = await supabase.auth.getUser()
+        // ⚡️ FIX: Race Supabase against a 3-second timeout
+        // If Supabase hangs (due to adblockers/network), we give up and show the page.
+        const { data } = await Promise.race([
+          supabase.auth.getUser(),
+          new Promise((_, reject) => setTimeout(() => reject("Timeout"), 3000))
+        ]) as any
         
-        if (data.user) {
+        if (!mounted) return
+
+        if (data?.user) {
           setUser(data.user)
           // Check if user is a driver
           const { data: driver } = await supabase
@@ -50,9 +59,9 @@ export default function HomeClient() {
           setIsDriver(false)
         }
       } catch (error) {
-        console.error("Auth check failed", error)
+        console.warn("Auth check timed out or failed", error)
       } finally {
-        setAuthReady(true)
+        if (mounted) setAuthReady(true)
       }
     }
     
@@ -60,6 +69,7 @@ export default function HomeClient() {
 
     // Listen for auth changes (sign in/out)
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return
       setUser(session?.user ?? null)
       if (session?.user) {
          const { data: driver } = await supabase
@@ -78,6 +88,7 @@ export default function HomeClient() {
     window.addEventListener("scroll", handleWindowScroll)
     
     return () => {
+      mounted = false
       window.removeEventListener("scroll", handleWindowScroll)
       authListener.subscription.unsubscribe()
     }

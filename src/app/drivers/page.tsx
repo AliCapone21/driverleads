@@ -1,10 +1,15 @@
 import { Suspense } from 'react'
-import DriversClient from '../../components/DriversClient' 
+import DriversClient from '../../components/DriversClient'
+import { createClient } from "@/utils/supabase/server"
 
-// Force dynamic rendering ensures the client component always mounts fresh
-export const dynamic = "force-dynamic" 
+// Force dynamic because we check cookies
+export const dynamic = "force-dynamic"
 
-export default function DriversPage() {
+export default async function DriversPage({ searchParams }: { searchParams: { tab?: string } }) {
+  // 1. Fetch User on Server (Instant Auth)
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
   return (
     <Suspense 
       fallback={
@@ -13,7 +18,8 @@ export default function DriversPage() {
         </div>
       }
     >
-      <DriversClient />
+      {/* 2. Pass the user to the client component */}
+      <DriversClient initialUser={user} />
     </Suspense>
   )
 }

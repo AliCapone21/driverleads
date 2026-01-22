@@ -1,9 +1,11 @@
 "use client"
 
 import { useEffect, useMemo, useState, useRef } from "react"
-import { createClient } from "@/utils/supabase/client" // <--- CHANGED
+import { createClient } from "@/utils/supabase/client" 
 import { useRouter, useSearchParams } from "next/navigation"
 import { AnimatePresence, motion } from "framer-motion"
+import { User } from "@supabase/supabase-js"
+import Link from "next/link" // <--- CRITICAL FIX for speed
 
 /* --- Types & Helpers --- */
 type DriverRow = {
@@ -41,16 +43,19 @@ function typeLabel(t: "company" | "owner_operator") {
 
 const ease: [number, number, number, number] = [0.22, 1, 0.36, 1]
 
-export default function DriversClient() {
+// Accept initialUser prop to prevent "Logged Out" flash
+export default function DriversClient({ initialUser }: { initialUser: User | null }) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  // Initialize the browser-safe client
   const supabase = createClient()
 
   const [drivers, setDrivers] = useState<DriverRow[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState("")
-  const [sessionEmail, setSessionEmail] = useState<string | null>(null)
+  
+  // Initialize with Server Data (Instant!)
+  const [user, setUser] = useState<User | null>(initialUser)
+  
   const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
 
@@ -83,7 +88,7 @@ export default function DriversClient() {
     setCurrentPage(1)
   }, [typeFilter, minExp, ageMin, ageMax, query, sortBy])
 
-  // --- UPDATED LOADING LOGIC WITH TIMEOUT SAFETY ---
+  // --- UPDATED LOADING LOGIC ---
   useEffect(() => {
     let mounted = true
 
@@ -92,24 +97,20 @@ export default function DriversClient() {
       setError(null)
 
       try {
-        // 1. Race Auth Check against a 2-second timeout
-        const { data: sessionData } = await Promise.race([
-            supabase.auth.getSession(),
-            new Promise((_, resolve) => setTimeout(() => resolve({ data: { session: null } }), 2000))
-        ]) as any
+        // 1. Refresh Auth (Background check to keep session alive)
+        const { data: sessionData } = await supabase.auth.getSession()
+        if (mounted && sessionData.session?.user) {
+            setUser(sessionData.session.user)
+        }
 
-        if (!mounted) return
-
-        const session = sessionData?.session
-        const userId = session?.user?.id
-        setSessionEmail(session?.user?.email ?? null)
+        const currentUserId = sessionData.session?.user?.id || initialUser?.id
 
         // 2. Fetch Unlocks (Only if user exists)
-        if (userId) {
+        if (currentUserId) {
           const { data: unlockRows } = await supabase
             .from("unlocks")
             .select("driver_id")
-            .eq("user_id", userId)
+            .eq("user_id", currentUserId)
           
           if (mounted) {
              setUnlockedIds(new Set((unlockRows ?? []).map((r) => r.driver_id)))
@@ -137,7 +138,7 @@ export default function DriversClient() {
     load()
 
     return () => { mounted = false }
-  }, [supabase]) // Added supabase dependency
+  }, [supabase, initialUser])
 
   // Filter Logic
   const filtered = useMemo(() => {
@@ -187,8 +188,8 @@ export default function DriversClient() {
 
   async function signOut() {
     await supabase.auth.signOut()
-    router.refresh() // Clear server cookies/cache
-    router.push("/") // Navigate securely
+    router.refresh() 
+    router.push("/") 
   }
 
   return (
@@ -205,20 +206,20 @@ export default function DriversClient() {
       <header className="sticky top-0 z-40 border-b border-white/10 bg-black/30 backdrop-blur-xl">
         <div className="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <a href="/" className="flex items-center gap-2 group">
+            <Link href="/" className="flex items-center gap-2 group">
               <div className="h-9 w-9 rounded-xl bg-white/10 text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-black/30 ring-1 ring-white/10">
                 DL
               </div>
               <span className="font-bold tracking-tight hidden sm:block text-white/90">Driver Leads</span>
-            </a>
+            </Link>
             <div className="h-6 w-px bg-white/10 mx-2 hidden sm:block" />
             <h1 className="font-medium text-white/55 text-sm">Marketplace</h1>
           </div>
 
           <div className="flex items-center gap-3">
-            {sessionEmail ? (
+            {user ? (
               <div className="flex items-center gap-3">
-                <span className="text-xs font-medium text-white/55 hidden sm:block">{sessionEmail}</span>
+                <span className="text-xs font-medium text-white/55 hidden sm:block">{user.email}</span>
                 <button
                   onClick={signOut}
                   className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 hover:text-red-300 transition-colors"
@@ -227,12 +228,12 @@ export default function DriversClient() {
                 </button>
               </div>
             ) : (
-              <a
+              <Link
                 href="/login"
                 className="text-sm font-semibold bg-white text-black px-5 py-2 rounded-xl hover:bg-white/90 transition-all shadow-md shadow-black/30"
               >
                 Login
-              </a>
+              </Link>
             )}
           </div>
         </div>
@@ -513,10 +514,8 @@ export default function DriversClient() {
 /* --- Premium Driver Card (Dark) --- */
 function DriverCard({ data, isUnlocked }: { data: DriverRow; isUnlocked: boolean }) {
   return (
-    <motion.a
+    <Link
       href={`/drivers/${data.id}`}
-      whileHover={{ y: -6 }}
-      transition={{ duration: 0.8, ease }}
       className="group relative block rounded-3xl border border-white/10 bg-white/5 p-6 shadow-sm shadow-black/30 hover:bg-white/7 hover:border-white/20 hover:shadow-xl hover:shadow-black/40 overflow-hidden backdrop-blur-xl"
     >
       <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${isUnlocked ? "bg-emerald-400" : "bg-white"}`} />
@@ -612,7 +611,7 @@ function DriverCard({ data, isUnlocked }: { data: DriverRow; isUnlocked: boolean
           )}
         </div>
       </div>
-    </motion.a>
+    </Link>
   )
 }
 

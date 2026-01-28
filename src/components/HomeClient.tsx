@@ -31,7 +31,7 @@ export default function HomeClient() {
   const [navigating, setNavigating] = useState(false)
   const [authReady, setAuthReady] = useState(false)
 
-  // 1. Check Login Status on Mount
+  // Check Login Status on Mount
   useEffect(() => {
     let mounted = true
 
@@ -46,7 +46,6 @@ export default function HomeClient() {
 
         if (data?.user) {
           setUser(data.user)
-          // Check if user is a driver
           const { data: driver } = await supabase
             .from("drivers")
             .select("id")
@@ -67,7 +66,6 @@ export default function HomeClient() {
 
     checkUser()
 
-    // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
       setUser(session?.user ?? null)
@@ -100,11 +98,6 @@ export default function HomeClient() {
     window.location.reload()
   }
 
-  const handleNav = (url: string) => {
-    setNavigating(true)
-    router.push(url)
-  }
-
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, id: string) => {
     e.preventDefault()
     const element = document.getElementById(id)
@@ -121,20 +114,14 @@ export default function HomeClient() {
   )
 
   return (
-    // MAIN CONTAINER: Ensures text colors switch correctly
     <main className="min-h-screen relative font-sans text-zinc-900 dark:text-zinc-100 selection:bg-emerald-500 selection:text-white transition-colors duration-300">
       
       {/* --- GLASS BACKGROUND LAYER --- */}
       <div className="fixed inset-0 -z-50 h-full w-full bg-zinc-50 dark:bg-zinc-950 transition-colors duration-500">
-        {/* LIGHT MODE BLOBS */}
         <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-indigo-300/30 rounded-full blur-[120px] mix-blend-multiply dark:hidden animate-pulse-slow" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-emerald-300/30 rounded-full blur-[120px] mix-blend-multiply dark:hidden animate-pulse-slow" style={{ animationDelay: "1s" }} />
-        
-        {/* DARK MODE BLOBS (More intense, different blending) */}
         <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-indigo-600/20 rounded-full blur-[120px] hidden dark:block" />
         <div className="absolute bottom-[-20%] left-[-10%] w-[800px] h-[800px] bg-emerald-600/20 rounded-full blur-[120px] hidden dark:block" />
-        
-        {/* GLOBAL NOISE OVERLAY (Adds texture) */}
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 dark:opacity-10 mix-blend-overlay pointer-events-none"></div>
       </div>
 
@@ -151,7 +138,6 @@ export default function HomeClient() {
           }`}
         >
           <div className="mx-auto max-w-7xl px-6 flex items-center justify-between">
-            {/* Logo */}
             <a href="/" className="flex items-center gap-2.5 group z-50">
               <div className="relative h-9 w-9 overflow-hidden rounded-xl bg-gradient-to-br from-zinc-900 to-zinc-700 dark:from-white dark:to-zinc-300 flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-105">
                 <span className="font-black text-sm text-white dark:text-zinc-950">DL</span>
@@ -161,7 +147,6 @@ export default function HomeClient() {
               </span>
             </a>
 
-            {/* Desktop Nav - GLASS PILL */}
             <nav className="hidden md:flex items-center bg-white/40 dark:bg-black/40 rounded-full px-8 py-2 border border-white/40 dark:border-white/10 backdrop-blur-md shadow-sm">
               <div className="flex items-center gap-8">
                 {navItems.map(({ label, id }) => (
@@ -177,11 +162,9 @@ export default function HomeClient() {
               </div>
             </nav>
 
-            {/* Right: Auth & Theme */}
             <div className="flex items-center gap-3">
               <ThemeToggle />
 
-              {/* Logged In User Dropdown */}
               {authReady && user && (
                 <div className="relative">
                   <button
@@ -204,7 +187,6 @@ export default function HomeClient() {
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 8, scale: 0.96 }}
                           transition={{ duration: 0.2 }}
-                          // DROPDOWN GLASS STYLE
                           className="absolute right-0 mt-3 w-72 rounded-2xl border border-white/50 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-2xl p-2 shadow-2xl z-50 overflow-hidden"
                         >
                           <div className="px-4 py-3">
@@ -232,25 +214,13 @@ export default function HomeClient() {
                             </button>
                           </div>
 
-                          {/* DASHBOARD BUTTON AT BOTTOM */}
                           <div className="border-t border-zinc-200/50 dark:border-white/10 p-2 mt-1">
-                            {isDriver ? (
-                                <button
-                                  onClick={() => handleNav("/drivers/dashboard")}
-                                  disabled={navigating}
-                                  className="w-full text-center py-2.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-bold hover:opacity-90 transition-opacity flex justify-center items-center gap-2 shadow-lg"
-                                >
-                                  {navigating ? <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin"/> : "My Dashboard"}
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => handleNav("/recruiter/settings")}
-                                  disabled={navigating}
-                                  className="w-full text-center py-2.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-bold hover:opacity-90 transition-opacity flex justify-center items-center gap-2 shadow-lg"
-                                >
-                                  {navigating ? <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin"/> : "Edit Settings"}
-                                </button>
-                              )}
+                            <a 
+                              href={isDriver ? "/drivers/dashboard" : "/recruiter/settings"} 
+                              className="block w-full text-center py-2.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-bold hover:opacity-90 transition-opacity shadow-lg"
+                            >
+                              {isDriver ? "My Dashboard" : "Edit Settings"}
+                            </a>
                           </div>
                         </motion.div>
                       </>
@@ -259,24 +229,19 @@ export default function HomeClient() {
                 </div>
               )}
 
-              {/* Logged Out Buttons */}
               {authReady && !user && (
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleNav("/login")}
-                    disabled={navigating}
+                  <a
+                    href="/login"
                     className="hidden sm:inline-flex px-4 py-2 rounded-xl text-sm font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-white/50 dark:hover:bg-white/10 transition-all"
                   >
                     Log In
-                  </button>
-                  <ActionBtn
-                    onClick={() => handleNav("/join")}
-                    loading={navigating}
-                    variant="primary"
-                    size="sm"
-                  >
-                    Driver Sign Up
-                  </ActionBtn>
+                  </a>
+                  <a href="/join">
+                    <ActionBtn variant="primary" size="sm">
+                      Driver Sign Up
+                    </ActionBtn>
+                  </a>
                 </div>
               )}
             </div>
@@ -293,7 +258,6 @@ export default function HomeClient() {
             animate="show"
             className="max-w-4xl mx-auto text-center"
           >
-            {/* GLASS PILL BADGE */}
             <motion.div
               variants={fadeUp}
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-zinc-900/10 dark:border-white/10 bg-white/40 dark:bg-zinc-800/40 backdrop-blur-md shadow-sm text-xs font-semibold text-zinc-600 dark:text-zinc-300 mb-8 hover:scale-105 transition-transform cursor-default"
@@ -323,14 +287,12 @@ export default function HomeClient() {
               Create your profile once and get offers sent directly to your phone.
             </motion.p>
 
-            {/* --- LOADING SPINNER --- */}
             {!authReady && (
               <div className="mt-12 flex justify-center opacity-50">
                 <div className="h-6 w-6 border-2 border-zinc-900 dark:border-white border-t-transparent rounded-full animate-spin"></div>
               </div>
             )}
 
-            {/* --- HERO BUTTONS --- */}
             {authReady && (
               <motion.div
                 initial={{ opacity: 0, y: 14 }}
@@ -338,39 +300,28 @@ export default function HomeClient() {
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6"
               >
-                <ActionBtn
-                  onClick={() => handleNav("/join")}
-                  loading={navigating}
-                  variant="primary"
-                  size="lg"
-                  badge="Free"
-                >
-                  Join as Driver
-                </ActionBtn>
+                <a href="/join" className="w-full sm:w-auto">
+                  <ActionBtn variant="primary" size="lg" badge="Free">
+                    Join as Driver
+                  </ActionBtn>
+                </a>
 
-                <ActionBtn
-                  onClick={() => handleNav("/drivers")}
-                  loading={navigating}
-                  variant="outline"
-                  size="lg"
-                >
-                  I'm a Recruiter
-                </ActionBtn>
+                <a href="/drivers" className="w-full sm:w-auto">
+                  <ActionBtn variant="outline" size="lg">
+                    I'm a Recruiter
+                  </ActionBtn>
+                </a>
 
                 {user && isDriver && (
-                  <ActionBtn
-                    onClick={() => handleNav("/drivers/dashboard")}
-                    loading={navigating}
-                    variant="secondary"
-                    size="lg"
-                  >
-                    Go to Dashboard
-                  </ActionBtn>
+                  <a href="/drivers/dashboard" className="w-full sm:w-auto">
+                    <ActionBtn variant="secondary" size="lg">
+                      Go to Dashboard
+                    </ActionBtn>
+                  </a>
                 )}
               </motion.div>
             )}
 
-            {/* Trusted Text */}
             <motion.div
               variants={fadeUp}
               className="mt-16 pt-8 border-t border-zinc-900/5 dark:border-white/5 flex flex-wrap justify-center gap-x-8 gap-y-4 text-xs font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-600"
@@ -386,7 +337,7 @@ export default function HomeClient() {
         </div>
       </section>
 
-      {/* BENEFITS - GLASS CARDS */}
+      {/* BENEFITS */}
       <section id="benefits" className="py-24 relative">
         <div className="mx-auto max-w-6xl px-4">
           <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid md:grid-cols-3 gap-8">
@@ -423,9 +374,7 @@ export default function HomeClient() {
             </motion.div>
 
             <div className="grid md:grid-cols-3 gap-8 relative">
-              {/* Connector Line */}
               <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-transparent via-zinc-300 dark:via-zinc-700 to-transparent z-0" />
-              
               <StepCard n="1" title="Create Profile" desc="Fill out a simple form about your experience and truck type." />
               <StepCard n="2" title="Wait for Offers" desc="We show your profile to 500+ top rated US carriers." />
               <StepCard n="3" title="Accept & Drive" desc="Choose the offer with the highest pay per mile. No fees." />
@@ -433,15 +382,11 @@ export default function HomeClient() {
 
             {authReady && !user && (
               <motion.div variants={fadeUp} className="mt-20 flex justify-center">
-                <ActionBtn
-                  onClick={() => handleNav("/join")}
-                  loading={navigating}
-                  variant="primary"
-                  size="lg"
-                  arrow
-                >
-                  Start Your Profile
-                </ActionBtn>
+                <a href="/join">
+                  <ActionBtn variant="primary" size="lg" arrow>
+                    Start Your Profile
+                  </ActionBtn>
+                </a>
               </motion.div>
             )}
           </motion.div>
@@ -499,12 +444,11 @@ export default function HomeClient() {
                 <span className="font-bold text-emerald-600 dark:text-emerald-400">Drivers:</span> You never pay. Joining is 100% free for you.
               </p>
             </motion.div>
-
           </motion.div>
         </div>
       </section>
 
-      {/* FOOTER - HEAVY GLASS */}
+      {/* FOOTER */}
       <footer className="relative z-10 border-t border-zinc-200 dark:border-white/10 bg-white/40 dark:bg-black/40 backdrop-blur-xl pt-20 pb-10">
         <div className="mx-auto max-w-6xl px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-16">
@@ -570,7 +514,6 @@ function ActionBtn({
   const variants: any = {
     primary: "bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 border-transparent",
     secondary: "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-xl hover:opacity-90 border-transparent",
-    // Outline adapted for glass background
     outline: "bg-white/50 dark:bg-white/5 border-zinc-200 dark:border-white/20 text-zinc-900 dark:text-white hover:bg-white dark:hover:bg-white/10 backdrop-blur-sm",
     ghost: "bg-transparent text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 border-transparent"
   }
@@ -583,6 +526,7 @@ function ActionBtn({
 
   return (
     <motion.button
+      type="button"
       onClick={onClick}
       disabled={loading}
       whileHover={{ scale: 1.02, y: -2 }}
@@ -611,12 +555,10 @@ function ActionBtn({
   )
 }
 
-// NEW GLASS CARD COMPONENT
 function GlassCard({ icon, title, desc }: { icon: string, title: string, desc: string }) {
   return (
     <motion.div 
       variants={fadeUp} 
-      // BG WHITE/60 + BACKDROP BLUR = GLASS
       className="text-center p-8 rounded-3xl bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl border border-white/50 dark:border-white/10 hover:border-emerald-500/30 dark:hover:border-emerald-500/30 transition-all shadow-sm hover:shadow-2xl hover:shadow-emerald-500/5"
     >
       <div className="text-5xl mb-6 filter drop-shadow-sm">{icon}</div>

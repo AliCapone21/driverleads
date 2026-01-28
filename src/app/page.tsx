@@ -1,3 +1,5 @@
+// src/app/page.tsx
+
 import { Suspense } from "react"
 import HomeClient from "@/components/HomeClient"
 

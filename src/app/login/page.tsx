@@ -1,3 +1,5 @@
+// src/app/login/page.tsx
+
 import { Suspense } from "react"
 import LoginClient from "../../components/LoginClient"
 

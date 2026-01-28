@@ -1,3 +1,5 @@
+// src/components/navigation-loader.tsx
+
 "use client"
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react"

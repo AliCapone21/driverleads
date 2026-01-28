@@ -1,3 +1,5 @@
+// src/app/recruiter/settings/page.tsx
+
 import { Suspense } from "react"
 import SettingsClient from "../../../components/SettingsClient"
 

@@ -1,10 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { createClient } from "@/utils/supabase/client"
 import { motion, AnimatePresence } from "framer-motion"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
+import { ThemeToggle } from "@/components/ThemeToggle"
 
 const ease: [number, number, number, number] = [0.22, 1, 0.36, 1]
 
@@ -17,6 +19,10 @@ export default function LoginClient() {
   const [msg, setMsg] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+
+  // avoid hydration mismatch for theme UI pieces if needed
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
 
   async function signUp() {
     setLoading(true)
@@ -55,43 +61,63 @@ export default function LoginClient() {
   const isSuccess = !!msg && msg.toLowerCase().includes("check")
 
   return (
-    <main className="min-h-screen relative flex items-center justify-center bg-[#070A12] px-4 overflow-hidden selection:bg-emerald-500/30">
-      
-      {/* Cinematic Background */}
+    <main className="min-h-screen relative flex items-center justify-center px-4 overflow-hidden selection:bg-emerald-500/30 bg-white text-zinc-900 dark:bg-[#070A12] dark:text-white">
+      {/* Ambient Background */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-indigo-600/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-20%] left-[-10%] w-[800px] h-[800px] bg-emerald-600/10 rounded-full blur-[120px]" />
-        <div className="absolute inset-0 opacity-[0.05] [background-image:linear-gradient(to_right,rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.1)_1px,transparent_1px)] [background-size:42px_42px]" />
+        {/* light */}
+        <div className="absolute top-[-22%] right-[-12%] w-[820px] h-[820px] bg-indigo-600/15 rounded-full blur-[120px] dark:hidden" />
+        <div className="absolute bottom-[-22%] left-[-12%] w-[820px] h-[820px] bg-emerald-600/15 rounded-full blur-[120px] dark:hidden" />
+        <div className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(to_right,rgba(0,0,0,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.08)_1px,transparent_1px)] [background-size:48px_48px] dark:hidden" />
+
+        {/* dark */}
+        <div className="absolute top-[-22%] right-[-12%] w-[820px] h-[820px] bg-indigo-600/10 rounded-full blur-[120px] hidden dark:block" />
+        <div className="absolute bottom-[-22%] left-[-12%] w-[820px] h-[820px] bg-emerald-600/10 rounded-full blur-[120px] hidden dark:block" />
+        <div className="absolute inset-0 opacity-[0.05] [background-image:linear-gradient(to_right,rgba(255,255,255,0.10)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.10)_1px,transparent_1px)] [background-size:48px_48px] hidden dark:block" />
+      </div>
+
+      {/* Top right controls */}
+      <div className="fixed top-4 right-4 z-20 flex items-center gap-3">
+        {mounted && <ThemeToggle />}
       </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease }}
         className="w-full max-w-md relative z-10"
       >
-        {/* Logo */}
-        <div className="mb-10 text-center">
-          <Link href="/" className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-black font-black text-xl shadow-2xl hover:scale-105 transition-transform">
-            DL
+        {/* Brand */}
+        <div className="mb-8 text-center">
+          <Link href="/" className="inline-flex items-center justify-center">
+            {/* Prefer your real logo; fallback to DL badge if missing */}
+            <div className="relative h-15 w-30 scale-300 transition-transform duration-300 group-hover:scale-[3.7]">
+              <Image src="/logo3.png" alt="Driver Leads" fill priority className="object-contain" />
+            </div>
+            <span className="sr-only">Driver Leads</span>
           </Link>
-          <h1 className="mt-6 text-3xl font-black tracking-tighter text-white uppercase leading-none">
-            Driver Leads
+
+          <h1 className="mt-1 text-3xl font-black tracking-tight text-zinc-900 dark:text-white leading-none">
+            Sign in to Driver Leads
           </h1>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500/60 mt-2">
-            Secure Carrier Terminal
+          <p className="text-xs font-semibold text-zinc-500 dark:text-white/55 mt-2">
+            Secure access for carriers, recruiters, and dispatch teams.
           </p>
         </div>
 
         {/* Card */}
-        <div className="rounded-[32px] bg-zinc-900/50 backdrop-blur-xl border border-white/5 shadow-2xl p-8 sm:p-10">
-          <h2 className="text-xl font-black tracking-tight text-white uppercase mb-6">
-            Login / Sign Up
-          </h2>
+        <div className="rounded-[28px] bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xl border border-zinc-200/70 dark:border-white/10 shadow-2xl shadow-black/10 dark:shadow-black/40 p-7 sm:p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-sm font-extrabold uppercase tracking-widest text-zinc-700 dark:text-white/80">
+              Account Access
+            </h2>
+            <span className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-400/70">
+              Secure Terminal
+            </span>
+          </div>
 
           <div className="space-y-5">
             <Field
-              label="Email Address"
+              label="Email"
               type="email"
               value={email}
               onChange={setEmail}
@@ -99,9 +125,8 @@ export default function LoginClient() {
               disabled={loading}
             />
 
-            {/* Password */}
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2 ml-1">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400 mb-2 ml-1">
                 Password
               </label>
               <div className="relative">
@@ -111,32 +136,44 @@ export default function LoginClient() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   disabled={loading}
-                  className="w-full rounded-2xl bg-white/5 border border-white/5 px-4 py-4 pr-12
-                             text-white font-bold placeholder:text-zinc-700
-                             focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white/10
+                  className="w-full rounded-2xl bg-zinc-50 dark:bg-white/5 border border-zinc-200/70 dark:border-white/10 px-4 py-4 pr-12
+                             text-zinc-900 dark:text-white font-semibold placeholder:text-zinc-400 dark:placeholder:text-zinc-600
+                             focus:outline-none focus:ring-2 focus:ring-emerald-500/35 focus:border-emerald-500/30
                              transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
               </div>
+              <div className="mt-3 flex items-center justify-between">
+                <span className="text-[11px] text-zinc-500 dark:text-white/45">
+                  Use your company credentials.
+                </span>
+                <Link
+                  href="/"
+                  className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 hover:underline"
+                >
+                  Need help?
+                </Link>
+              </div>
             </div>
 
-            {/* Message Messaging */}
+            {/* Message */}
             <AnimatePresence mode="wait">
               {msg && (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className={`rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-wider text-center border ${
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className={`rounded-xl px-4 py-3 text-[11px] font-semibold text-center border ${
                     isSuccess
-                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                      : "bg-red-500/10 text-red-400 border-red-500/20"
+                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20"
+                      : "bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20"
                   }`}
                 >
                   {msg}
@@ -145,12 +182,14 @@ export default function LoginClient() {
             </AnimatePresence>
 
             {/* Actions */}
-            <div className="pt-2 space-y-4">
+            <div className="pt-1 space-y-3">
               <button
                 onClick={signIn}
                 disabled={loading}
-                className="w-full rounded-2xl bg-emerald-500 py-4 font-black uppercase text-xs tracking-[0.2em] text-black
-                           hover:bg-emerald-400 transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+                className="w-full rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-black py-4
+                           font-black uppercase text-xs tracking-[0.2em]
+                           hover:opacity-90 transition-all active:scale-[0.99]
+                           shadow-lg shadow-black/10 disabled:opacity-50"
               >
                 {loading ? "Authorizing..." : "Sign In"}
               </button>
@@ -158,30 +197,43 @@ export default function LoginClient() {
               <button
                 onClick={signUp}
                 disabled={loading}
-                className="w-full rounded-2xl border border-white/10 py-4 font-black uppercase text-xs tracking-[0.2em] text-white
-                           hover:bg-white/5 transition-all active:scale-[0.98] disabled:opacity-50"
+                className="w-full rounded-2xl border border-zinc-200/70 dark:border-white/10 py-4
+                           font-black uppercase text-xs tracking-[0.2em] text-zinc-900 dark:text-white
+                           hover:bg-zinc-100/70 dark:hover:bg-white/5 transition-all active:scale-[0.99]
+                           disabled:opacity-50"
               >
                 Create Account
               </button>
-            </div>
 
-            <p className="pt-4 text-center text-[9px] font-bold uppercase tracking-widest text-zinc-600">
-              Encryption active • GDPR compliant
-            </p>
+              <div className="pt-2 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500 dark:text-white/35">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500/70" />
+                Encrypted • Secure • GDPR-ready
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Footer / Back Home */}
-        <div className="mt-10 flex justify-center">
-          <Link 
-            href="/" 
-            className="group flex items-center gap-3 px-8 py-4 rounded-2xl bg-white/5 border border-white/5 
-                       text-zinc-400 hover:text-white hover:bg-white/10 hover:border-white/10 transition-all"
+        <div className="mt-8 flex justify-center">
+          <Link
+            href="/"
+            className="group flex items-center gap-3 px-7 py-3.5 rounded-2xl bg-zinc-100/70 dark:bg-white/5 border border-zinc-200/70 dark:border-white/10
+                       text-zinc-600 dark:text-white/70 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 transition-all"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-x-1 transition-transform">
-              <path d="m15 18-6-6 6-6"/>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="group-hover:-translate-x-1 transition-transform"
+            >
+              <path d="m15 18-6-6 6-6" />
             </svg>
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Abort and Return to Hub</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Back to Home</span>
           </Link>
         </div>
       </motion.div>
@@ -198,10 +250,17 @@ function Field({
   value,
   onChange,
   disabled,
-}: any) {
+}: {
+  label: string
+  type: string
+  placeholder: string
+  value: string
+  onChange: (v: string) => void
+  disabled: boolean
+}) {
   return (
     <div>
-      <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2 ml-1">
+      <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400 mb-2 ml-1">
         {label}
       </label>
       <input
@@ -210,9 +269,9 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
-        className="w-full rounded-2xl bg-white/5 border border-white/5 px-4 py-4
-                   text-white font-bold placeholder:text-zinc-700
-                   focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white/10
+        className="w-full rounded-2xl bg-zinc-50 dark:bg-white/5 border border-zinc-200/70 dark:border-white/10 px-4 py-4
+                   text-zinc-900 dark:text-white font-semibold placeholder:text-zinc-400 dark:placeholder:text-zinc-600
+                   focus:outline-none focus:ring-2 focus:ring-emerald-500/35 focus:border-emerald-500/30
                    transition-all"
       />
     </div>

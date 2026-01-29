@@ -190,7 +190,7 @@ export default function HomeClient() {
       >
         <div className="mx-auto max-w-7xl px-6 flex items-center justify-between">
           <a href="/" className="flex items-center gap-3 group">
- <div className="relative h-25 w-40 scale-150 transition-transform duration-300 group-hover:scale-[1.7]">
+ <div className="relative h-18 w-40 scale-250 transition-transform duration-300 group-hover:scale-[2.7]">
     <Image
       src="/logo3.png"
       alt="Driver Leads"

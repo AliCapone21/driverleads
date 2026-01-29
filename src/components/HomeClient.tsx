@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { createClient } from "@/utils/supabase/client"
 import { User } from "@supabase/supabase-js"
 import type { LucideIcon } from "lucide-react"
+import Image from "next/image"
 import {
   CheckCircle2,
   Gauge,
@@ -188,12 +189,21 @@ export default function HomeClient() {
         ].join(" ")}
       >
         <div className="mx-auto max-w-7xl px-6 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2 group">
-            <div className="h-9 w-9 bg-zinc-900 dark:bg-zinc-50 rounded-lg flex items-center justify-center transition-transform group-hover:scale-[1.03]">
-              <span className="font-black text-xs text-white dark:text-black">DL</span>
-            </div>
-            <span className="font-black text-lg tracking-tight uppercase">Driver Leads</span>
-          </a>
+          <a href="/" className="flex items-center gap-3 group">
+ <div className="relative h-25 w-40 scale-150 transition-transform duration-300 group-hover:scale-[1]">
+    <Image
+      src="/logo3.png"
+      alt="Driver Leads"
+      fill
+      priority
+      className="object-contain"
+    />
+  </div>
+
+  {/* Optional: keep text for accessibility/SEO but hidden visually */}
+  <span className="sr-only">Driver Leads</span>
+</a>
+
 
           <nav className="hidden md:flex items-center gap-8">
             {navItems.map(({ label, id }) => (

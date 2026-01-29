@@ -30,10 +30,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    // suppressHydrationWarning is required for next-themes to work without errors
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {/* Providers wrap the entire app */}
         <ThemeProvider>
           <NavigationProvider>
             <RouteLoader />

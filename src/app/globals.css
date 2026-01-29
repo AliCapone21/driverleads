@@ -1,72 +1,85 @@
 @import "tailwindcss";
 
-/* -------------------------------------------------------
-   Theme Tokens (Premium light/dark)
--------------------------------------------------------- */
+/* ✅ Tailwind v4 fix:
+   This makes `dark:` respond to the `.dark` class added by next-themes.
+*/
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* -------------------------------
+   Theme Tokens
+-------------------------------- */
 
 :root {
-  /* base */
-  --background: 255 255 255;
-  --foreground: 17 24 39;   /* slate-900 */
+  color-scheme: light;
 
-  /* surfaces */
-  --card: 255 255 255;
-  --card-2: 249 250 251;    /* subtle alt surface */
-  --border: 229 231 235;    /* gray-200 */
+  /* tokens stored as "r, g, b" so we can do rgb(var(--x) / 0.5) */
+  --background: 255, 255, 255;
+  --foreground: 17, 24, 39;
 
-  /* text */
-  --muted: 107 114 128;     /* gray-500 */
-  --muted-2: 156 163 175;   /* gray-400 */
+  --card: 255, 255, 255;
+  --border: 229, 231, 235;
 
-  /* accents */
-  --ring: 99 102 241;       /* indigo-500 */
-
-  /* shadows */
-  --shadow: 17 24 39;
+  --muted: 107, 114, 128;
+  --muted-2: 156, 163, 175;
 }
 
-/* next-themes uses class="dark" on <html> */
-html.dark {
-  --background: 10 12 16;   /* deep near-black */
-  --foreground: 241 245 249;/* slate-100 */
+.dark {
+  color-scheme: dark;
 
-  --card: 16 19 26;         /* deep slate */
-  --card-2: 20 24 33;
-  --border: 40 44 58;
+  --background: 5, 5, 5;
+  --foreground: 241, 245, 249;
 
-  --muted: 148 163 184;     /* slate-400 */
-  --muted-2: 100 116 139;   /* slate-500 */
+  --card: 15, 15, 15;
+  --border: 31, 41, 55;
 
-  --ring: 129 140 248;      /* indigo-400 */
-  --shadow: 0 0 0;
+  --muted: 148, 163, 184;
+  --muted-2: 75, 85, 99;
 }
 
-/* Apply variables to page */
+/* -------------------------------
+   Base
+-------------------------------- */
+
 html,
 body {
-  background: rgb(var(--background));
+  min-height: 100vh;
+  background-color: rgb(var(--background));
   color: rgb(var(--foreground));
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* Smooth theme transitions */
-* {
-  transition-property: background-color, color, border-color, fill, stroke, box-shadow;
-  transition-duration: 180ms;
-  transition-timing-function: ease;
+/* Smooth scrolling for anchor links */
+html {
+  scroll-behavior: smooth;
 }
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
+/* -------------------------------
+   Scrollbar
+-------------------------------- */
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: rgb(var(--background));
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--muted-2) / 0.35);
+  border-radius: 10px;
+  border: 2px solid rgb(var(--background));
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--muted-2) / 0.6);
 }
 
-/* Hero dots background */
+/* -------------------------------
+   Subtle background texture
+-------------------------------- */
+
 .hero-dots {
-  background-image: radial-gradient(rgba(0, 0, 0, 0.10) 1px, transparent 1px);
-  background-size: 18px 18px;
-  opacity: 0.35;
-}
-
-html.dark .hero-dots {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.10) 1px, transparent 1px);
-  opacity: 0.22;
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgb(var(--foreground) / 0.07) 1px, transparent 1px);
+  background-size: 26px 26px;
+  pointer-events: none;
 }

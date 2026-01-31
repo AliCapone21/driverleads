@@ -23,6 +23,12 @@ type DriverRow = {
   experience_years: number
   endorsements: string[]
   status: string | null
+
+  // ✅ Financial fields (added back)
+  expected_gross: number | null
+  expected_rpm: number | null
+  expected_cpm: number | null
+  expected_miles: number | null
 }
 
 type DriverPrivateRow = {
@@ -46,6 +52,23 @@ function calcAge(dob: string | null) {
 
 function typeLabel(t: "company" | "owner_operator") {
   return t === "owner_operator" ? "Owner Operator" : "Company Driver"
+}
+
+// ✅ robust numeric check (0 is valid)
+function hasNum(v: number | null | undefined): v is number {
+  return v !== null && v !== undefined && Number.isFinite(v)
+}
+
+// ✅ deterministic formatting (prevents hydration mismatch)
+function formatInt(n: number) {
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(n)
+}
+function formatMoneyInt(n: number) {
+  return `$${formatInt(n)}`
+}
+function formatRate(n: number) {
+  // for RPM-style values (e.g. 1.25)
+  return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)
 }
 
 const ease: [number, number, number, number] = [0.22, 1, 0.36, 1]
@@ -159,7 +182,10 @@ export default function DriverProfileClient({ initialDriver, id }: { initialDriv
         {/* Header */}
         <header className="sticky top-0 z-40 border-b border-zinc-200/60 dark:border-white/10 bg-white/70 dark:bg-black/30 backdrop-blur-xl">
           <div className="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between gap-3">
-            <Link href="/drivers" className="flex items-center gap-3 text-sm font-semibold text-zinc-600 hover:text-zinc-900 dark:text-white/70 dark:hover:text-white transition-colors group">
+            <Link
+              href="/drivers"
+              className="flex items-center gap-3 text-sm font-semibold text-zinc-600 hover:text-zinc-900 dark:text-white/70 dark:hover:text-white transition-colors group"
+            >
               <div className="p-1 rounded-md group-hover:bg-black/5 dark:group-hover:bg-white/5 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="m15 18-6-6 6-6" />
@@ -300,6 +326,57 @@ export default function DriverProfileClient({ initialDriver, id }: { initialDriv
                       }
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* ✅ NEW: FINANCIAL EXPECTATIONS (kept in your style) */}
+              <div className="bg-white/70 dark:bg-white/5 rounded-3xl p-8 border border-zinc-200/70 dark:border-white/10 shadow-sm shadow-black/5 dark:shadow-black/30 backdrop-blur-xl">
+                <h3 className="text-sm font-extrabold text-zinc-500 dark:text-white/50 uppercase tracking-wider mb-6">
+                  Financial Expectations
+                </h3>
+
+                <div className="grid grid-cols-2 gap-6">
+                  {driver.driver_type === "owner_operator" ? (
+                    <>
+                      <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10">
+                        <div className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-widest mb-1">
+                          Expected Gross
+                        </div>
+                        <div className="text-xl font-bold text-zinc-900 dark:text-white">
+                          {hasNum(driver.expected_gross) ? `${formatMoneyInt(driver.expected_gross)}/wk` : "Flexible"}
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10">
+                        <div className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-widest mb-1">
+                          Min RPM
+                        </div>
+                        <div className="text-xl font-bold text-zinc-900 dark:text-white">
+                          {hasNum(driver.expected_rpm) ? `$${formatRate(driver.expected_rpm)}/mi` : "Flexible"}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10">
+                        <div className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-widest mb-1">
+                          Expected CPM
+                        </div>
+                        <div className="text-xl font-bold text-zinc-900 dark:text-white">
+                          {hasNum(driver.expected_cpm) ? `${formatInt(driver.expected_cpm)}¢/mi` : "Flexible"}
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10">
+                        <div className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-widest mb-1">
+                          Desired Miles
+                        </div>
+                        <div className="text-xl font-bold text-zinc-900 dark:text-white">
+                          {hasNum(driver.expected_miles) ? `${formatInt(driver.expected_miles)}/wk` : "Flexible"}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 

@@ -50,6 +50,8 @@ src/
 ├── utils/                # Supabase SSR (Server, Client, Middleware)
 └── globals.css           # Tailwind v4 configuration & Theme tokens
 
+```
+
 🚦 Getting Started
 1. Environment Variables
 Create a .env.local file in the root directory:

@@ -42,13 +42,23 @@ export default function JoinClient() {
     age: "",
     experience_years: "",
     endorsements: "",
-    driver_type: "company",
+    driver_type: "company" as "company" | "owner_operator",
     isConfidential: false,
     cdl_file: null as File | null,
+
+    // ✅ Salary expectations (stored on drivers table)
+    expected_gross: "", // owner_operator (number)
+    expected_rpm: "", // owner_operator (number, e.g. 1.25)
+    expected_cpm: "", // company (number, cents)
+    expected_miles: "", // company (number)
   })
 
   /* --- Validation --- */
   const isValidEmail = (email: string) => /\S+@\S+\.\S+/.test(email)
+
+  // CDL number (US varies by state). We'll accept 6–12 alphanumeric, uppercase, ignore separators.
+  const normalizeCdl = (v: string) => v.toUpperCase().replace(/[^A-Z0-9]/g, "")
+  const isValidCdlNumber = (v: string) => /^[A-Z0-9]{6,12}$/.test(normalizeCdl(v))
 
   const isStep1Valid =
     !!formData.first_name &&
@@ -56,6 +66,23 @@ export default function JoinClient() {
     isValidEmail(formData.email) &&
     formData.password.length >= 8 &&
     formData.password === formData.confirmPassword
+
+  const isOwner = formData.driver_type === "owner_operator"
+
+  // numeric helpers
+  const toNumOrNull = (v: string) => {
+    const n = Number(v)
+    return Number.isFinite(n) ? n : null
+  }
+  const isNonNegativeNumber = (v: string) => {
+    if (v === "") return false
+    const n = Number(v)
+    return Number.isFinite(n) && n >= 0
+  }
+
+  const salaryValid = isOwner
+    ? isNonNegativeNumber(formData.expected_gross) && isNonNegativeNumber(formData.expected_rpm)
+    : isNonNegativeNumber(formData.expected_cpm) && isNonNegativeNumber(formData.expected_miles)
 
   const isStep2Valid =
     !!formData.city &&
@@ -65,7 +92,8 @@ export default function JoinClient() {
     formData.phone.length >= 17 &&
     formData.experience_years !== "" &&
     formData.age !== "" &&
-    !!formData.cdl_number &&
+    isValidCdlNumber(formData.cdl_number) &&
+    salaryValid &&
     formData.isConfidential
 
   const stepTitle = useMemo(() => (step === 1 ? "Create your account" : "Driver profile details"), [step])
@@ -103,6 +131,11 @@ export default function JoinClient() {
     }
   }
 
+  const handleCdlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const cleaned = normalizeCdl(e.target.value).slice(0, 12)
+    setFormData((p) => ({ ...p, cdl_number: cleaned }))
+  }
+
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault()
     setStep2Attempted(true)
@@ -131,6 +164,12 @@ export default function JoinClient() {
         .toISOString()
         .split("T")[0]
 
+      // ✅ expectations (store null if parsing fails)
+      const expectedGross = isOwner ? toNumOrNull(formData.expected_gross) : null
+      const expectedRpm = isOwner ? toNumOrNull(formData.expected_rpm) : null
+      const expectedCpm = !isOwner ? toNumOrNull(formData.expected_cpm) : null
+      const expectedMiles = !isOwner ? toNumOrNull(formData.expected_miles) : null
+
       // 3) Insert public profile
       const { data: driver, error: drvErr } = await supabase
         .from("drivers")
@@ -147,6 +186,12 @@ export default function JoinClient() {
           driver_type: formData.driver_type,
           status: "active",
           dob: calculatedDob,
+
+          // ✅ NEW fields
+          expected_gross: expectedGross,
+          expected_rpm: expectedRpm,
+          expected_cpm: expectedCpm,
+          expected_miles: expectedMiles,
         })
         .select()
         .single()
@@ -158,7 +203,7 @@ export default function JoinClient() {
         driver_id: driver.id,
         email: formData.email,
         phone: formData.phone,
-        cdl_number: formData.cdl_number,
+        cdl_number: normalizeCdl(formData.cdl_number),
       })
       if (privErr) throw privErr
 
@@ -166,7 +211,6 @@ export default function JoinClient() {
       if (formData.cdl_file) {
         const fileExt = formData.cdl_file.name.split(".").pop()
         const path = `${driver.id}/cdl_doc.${fileExt}`
-        // NOTE: consider upsert:true if users re-upload; kept default to match your original behavior
         await supabase.storage.from("cdls").upload(path, formData.cdl_file)
       }
 
@@ -178,6 +222,10 @@ export default function JoinClient() {
     }
   }
 
+  const salaryHint = isOwner
+    ? "Owner-Operator expectations help carriers match you faster."
+    : "Company expectations help recruiters send accurate offers."
+
   return (
     <main className="min-h-screen relative overflow-hidden bg-white text-zinc-900 dark:bg-[#070A12] dark:text-white">
       {/* Ambient background */}
@@ -185,18 +233,22 @@ export default function JoinClient() {
         {/* light */}
         <div className="absolute top-[-25%] right-[-12%] w-[900px] h-[900px] bg-indigo-600/15 rounded-full blur-[140px] dark:hidden" />
         <div className="absolute bottom-[-25%] left-[-12%] w-[900px] h-[900px] bg-emerald-600/15 rounded-full blur-[140px] dark:hidden" />
-        <div className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(to_right,rgba(0,0,0,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.08)_1px,transparent_1px)] [background-size:48px_48px] dark:hidden" />
+        <div
+          className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(to_right,rgba(0,0,0,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.08)_1px,transparent_1px)] [background-size:48px_48px] dark:hidden"
+        />
 
         {/* dark */}
         <div className="absolute top-[-25%] right-[-12%] w-[900px] h-[900px] bg-indigo-600/10 rounded-full blur-[140px] hidden dark:block" />
         <div className="absolute bottom-[-25%] left-[-12%] w-[900px] h-[900px] bg-emerald-600/10 rounded-full blur-[140px] hidden dark:block" />
-        <div className="absolute inset-0 opacity-[0.05] [background-image:linear-gradient(to_right,rgba(255,255,255,0.10)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.10)_1px,transparent_1px)] [background-size:48px_48px] hidden dark:block" />
+        <div
+          className="absolute inset-0 opacity-[0.05] [background-image:linear-gradient(to_right,rgba(255,255,255,0.10)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.10)_1px,transparent_1px)] [background-size:48px_48px] hidden dark:block"
+        />
       </div>
 
       {/* Top bar */}
       <div className="relative z-20">
         <div className="mx-auto max-w-6xl px-4 py-5 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3 group">
             <div className="relative h-15 w-30 scale-300 transition-transform duration-300 group-hover:scale-[3.7]">
               <Image src="/logo3.png" alt="Driver Leads" fill priority className="object-contain" />
             </div>
@@ -236,10 +288,7 @@ export default function JoinClient() {
           {/* Progress */}
           <div className="flex gap-2 mb-6">
             {[1, 2].map((i) => (
-              <div
-                key={i}
-                className="h-1.5 flex-1 rounded-full overflow-hidden bg-zinc-200/70 dark:bg-white/10"
-              >
+              <div key={i} className="h-1.5 flex-1 rounded-full overflow-hidden bg-zinc-200/70 dark:bg-white/10">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: step >= i ? "100%" : "0%" }}
@@ -375,6 +424,140 @@ export default function JoinClient() {
                     transition={{ duration: 0.4, ease }}
                     className="space-y-5"
                   >
+                    {/* ✅ Driver type (beautiful segmented control) */}
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-black uppercase tracking-widest ml-1 text-zinc-500 dark:text-zinc-400">
+                        Driver type
+                      </label>
+
+                      <div className="rounded-2xl border border-zinc-200/70 dark:border-white/10 bg-white/70 dark:bg-white/5 backdrop-blur-xl p-1.5">
+                        <div className="grid grid-cols-2 gap-1">
+                          {/* Company */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData((p) => ({
+                                ...p,
+                                driver_type: "company",
+                                expected_gross: "",
+                                expected_rpm: "",
+                                expected_cpm: p.expected_cpm,
+                                expected_miles: p.expected_miles,
+                              }))
+                            }}
+                            className={[
+                              "relative overflow-hidden rounded-xl px-4 py-3 text-left transition-all",
+                              formData.driver_type === "company"
+                                ? "bg-zinc-900 text-white dark:bg-white dark:text-black shadow-lg"
+                                : "bg-transparent text-zinc-700 dark:text-white/70 hover:bg-zinc-100/70 dark:hover:bg-white/10",
+                            ].join(" ")}
+                            aria-pressed={formData.driver_type === "company"}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <div className="text-[11px] font-extrabold uppercase tracking-widest">Company</div>
+                                <div className="text-[11px] mt-1 opacity-80">CPM + miles goals</div>
+                              </div>
+
+                              <div
+                                className={[
+                                  "h-9 w-9 rounded-xl flex items-center justify-center border",
+                                  formData.driver_type === "company"
+                                    ? "border-white/20 dark:border-black/10 bg-white/10 dark:bg-black/5"
+                                    : "border-zinc-200/70 dark:border-white/10 bg-white/50 dark:bg-white/5",
+                                ].join(" ")}
+                              >
+                                <svg
+                                  width="18"
+                                  height="18"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  className="opacity-90"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M10 6h4" />
+                                  <path d="M10 6a2 2 0 0 1 2-2 2 2 0 0 1 2 2" />
+                                  <path d="M4 9h16v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9Z" />
+                                  <path d="M4 13h16" />
+                                </svg>
+                              </div>
+                            </div>
+
+                            {formData.driver_type === "company" && (
+                              <span className="absolute inset-x-0 bottom-0 h-[2px] bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.35)]" />
+                            )}
+                          </button>
+
+                          {/* Owner Operator */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData((p) => ({
+                                ...p,
+                                driver_type: "owner_operator",
+                                expected_cpm: "",
+                                expected_miles: "",
+                                expected_gross: p.expected_gross,
+                                expected_rpm: p.expected_rpm,
+                              }))
+                            }}
+                            className={[
+                              "relative overflow-hidden rounded-xl px-4 py-3 text-left transition-all",
+                              formData.driver_type === "owner_operator"
+                                ? "bg-zinc-900 text-white dark:bg-white dark:text-black shadow-lg"
+                                : "bg-transparent text-zinc-700 dark:text-white/70 hover:bg-zinc-100/70 dark:hover:bg-white/10",
+                            ].join(" ")}
+                            aria-pressed={formData.driver_type === "owner_operator"}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <div className="text-[11px] font-extrabold uppercase tracking-widest">Owner</div>
+                                <div className="text-[11px] mt-1 opacity-80">Gross + RPM floor</div>
+                              </div>
+
+                              <div
+                                className={[
+                                  "h-9 w-9 rounded-xl flex items-center justify-center border",
+                                  formData.driver_type === "owner_operator"
+                                    ? "border-white/20 dark:border-black/10 bg-white/10 dark:bg-black/5"
+                                    : "border-zinc-200/70 dark:border-white/10 bg-white/50 dark:bg-white/5",
+                                ].join(" ")}
+                              >
+                                <svg
+                                  width="18"
+                                  height="18"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  className="opacity-90"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <circle cx="12" cy="12" r="9" />
+                                  <path d="M7 12h10" />
+                                  <path d="M12 12l2.5 6.5" />
+                                  <path d="M12 12l-2.5 6.5" />
+                                  <path d="M12 12V8" />
+                                </svg>
+                              </div>
+                            </div>
+
+                            {formData.driver_type === "owner_operator" && (
+                              <span className="absolute inset-x-0 bottom-0 h-[2px] bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.35)]" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      <p className="text-[11px] text-zinc-500 dark:text-white/45 ml-1">
+                        This only affects what expectations you enter — your contact stays private until you approve.
+                      </p>
+                    </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Input
                         label="Living city"
@@ -424,14 +607,18 @@ export default function JoinClient() {
                         onChange={handlePhoneChange}
                         isError={step2Attempted && formData.phone.length < 17}
                       />
-                      <Input
-                        label="CDL number"
-                        name="cdl_number"
-                        placeholder="Enter number"
-                        value={formData.cdl_number}
-                        onChange={handleChange}
-                        isError={step2Attempted && !formData.cdl_number}
-                      />
+                      <div>
+                        <Input
+                          label="CDL number"
+                          name="cdl_number"
+                          placeholder="6–12 letters/numbers"
+                          value={formData.cdl_number}
+                          onChange={handleCdlChange}
+                          maxLength={12}
+                          isError={step2Attempted && !isValidCdlNumber(formData.cdl_number)}
+                        />
+                      
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -439,6 +626,8 @@ export default function JoinClient() {
                         label="Age"
                         name="age"
                         type="number"
+                        inputMode="numeric"
+                        step="1"
                         placeholder="25"
                         value={formData.age}
                         onChange={handleChange}
@@ -448,6 +637,8 @@ export default function JoinClient() {
                         label="Experience (yrs)"
                         name="experience_years"
                         type="number"
+                        inputMode="numeric"
+                        step="1"
                         placeholder="5"
                         value={formData.experience_years}
                         onChange={handleChange}
@@ -460,6 +651,90 @@ export default function JoinClient() {
                         value={formData.endorsements}
                         onChange={handleChange}
                       />
+                    </div>
+
+                    {/* ✅ NEW: Expectations block */}
+                    <div
+                      className={[
+                        "rounded-3xl p-5 border backdrop-blur-xl",
+                        "bg-white/70 dark:bg-white/5",
+                        "border-zinc-200/70 dark:border-white/10",
+                      ].join(" ")}
+                    >
+                      <div className="flex items-start justify-between gap-4 mb-2">
+                        <div>
+                          <div className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-300/80">
+                            Expectations
+                          </div>
+                          <div className="text-sm font-extrabold text-zinc-800 dark:text-white/85">
+                            Pay & workload targets
+                          </div>
+                          <p className="text-[11px] text-zinc-500 dark:text-white/45 mt-1">{salaryHint}</p>
+                        </div>
+                        <div className="text-[11px] font-semibold text-zinc-500 dark:text-white/50 text-right">
+                          Required • helps matching
+                        </div>
+                      </div>
+
+                      <div className="mt-3">
+                        {isOwner ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <Input
+                              label="Expected gross / week (USD)"
+                              name="expected_gross"
+                              type="number"
+                              inputMode="numeric"
+                              step="100"
+                              placeholder="5000"
+                              value={formData.expected_gross}
+                              onChange={handleChange}
+                              isError={step2Attempted && !isNonNegativeNumber(formData.expected_gross)}
+                            />
+                            <Input
+                              label="Minimum RPM ($/mile)"
+                              name="expected_rpm"
+                              type="number"
+                              inputMode="decimal"
+                              step="0.01"
+                              placeholder="2"
+                              value={formData.expected_rpm}
+                              onChange={handleChange}
+                              isError={step2Attempted && !isNonNegativeNumber(formData.expected_rpm)}
+                            />
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <Input
+                              label="Expected CPM (cents/mile)"
+                              name="expected_cpm"
+                              type="number"
+                              inputMode="numeric"
+                              step="1"
+                              placeholder="65"
+                              value={formData.expected_cpm}
+                              onChange={handleChange}
+                              isError={step2Attempted && !isNonNegativeNumber(formData.expected_cpm)}
+                            />
+                            <Input
+                              label="Desired miles / week"
+                              name="expected_miles"
+                              type="number"
+                              inputMode="numeric"
+                              step="50"
+                              placeholder="2500"
+                              value={formData.expected_miles}
+                              onChange={handleChange}
+                              isError={step2Attempted && !isNonNegativeNumber(formData.expected_miles)}
+                            />
+                          </div>
+                        )}
+
+                        {step2Attempted && !salaryValid && (
+                          <div className="mt-4 rounded-xl px-4 py-3 text-[11px] font-semibold text-center border bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20">
+                            Please fill in the expectations fields to continue.
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* optional file */}
@@ -475,14 +750,14 @@ export default function JoinClient() {
                           onChange={handleChange}
                           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                         />
-                        <div className="w-full rounded-2xl p-4 flex items-center justify-center gap-2
+                        <div
+                          className="w-full rounded-2xl p-4 flex items-center justify-center gap-2
                                         bg-zinc-50 dark:bg-white/5 border border-zinc-200/70 dark:border-white/10
                                         text-zinc-600 dark:text-white/60 text-[11px] font-bold
-                                        hover:bg-zinc-100/70 dark:hover:bg-white/10 transition-all">
+                                        hover:bg-zinc-100/70 dark:hover:bg-white/10 transition-all"
+                        >
                           <UploadIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                          <span className="truncate">
-                            {formData.cdl_file ? formData.cdl_file.name : "Select a file"}
-                          </span>
+                          <span className="truncate">{formData.cdl_file ? formData.cdl_file.name : "Select a file"}</span>
                         </div>
                       </div>
                     </div>
@@ -493,8 +768,8 @@ export default function JoinClient() {
                         formData.isConfidential
                           ? "bg-emerald-500/10 border-emerald-500/25"
                           : step2Attempted
-                            ? "bg-red-500/10 border-red-500/25"
-                            : "bg-zinc-50 dark:bg-white/5 border-zinc-200/70 dark:border-white/10"
+                          ? "bg-red-500/10 border-red-500/25"
+                          : "bg-zinc-50 dark:bg-white/5 border-zinc-200/70 dark:border-white/10"
                       }`}
                     >
                       <input

@@ -22,7 +22,7 @@ export default async function DriverProfilePage({ params }: PageProps) {
   const supabase = await createClient()
 
   // 2. Fetch Public Driver Data on the Server
-  // We fetch only what is visible to everyone; private data is handled by the client + RLS
+  // ✅ UPDATED: Included financial expectation fields in the select query
   const { data: driver, error } = await supabase
     .from("drivers")
     .select(`
@@ -37,7 +37,11 @@ export default async function DriverProfilePage({ params }: PageProps) {
       driver_type, 
       experience_years, 
       endorsements, 
-      status
+      status,
+      expected_gross,
+      expected_rpm,
+      expected_cpm,
+      expected_miles
     `)
     .eq("id", id)
     .single()
@@ -49,9 +53,7 @@ export default async function DriverProfilePage({ params }: PageProps) {
 
   return (
     <main className="min-h-screen bg-[#070A12] text-slate-100 relative font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
-      {/* Ambient Background (Server-side)
-          Kept here to ensure instant visual load without hydration flickering 
-      */}
+      {/* Ambient Background */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-[820px] h-[820px] rounded-full blur-[140px] opacity-40 bg-indigo-500/20" />
         <div className="absolute -bottom-44 -left-44 w-[720px] h-[720px] rounded-full blur-[140px] opacity-40 bg-cyan-500/15" />
@@ -60,7 +62,7 @@ export default async function DriverProfilePage({ params }: PageProps) {
       </div>
 
       <Suspense fallback={<SkeletonProfile />}>
-        {/* 3. Hand off to the client component for Purchase/Download logic */}
+        {/* 3. Hand off to the client component with the complete driver data */}
         <DriverProfileClient initialDriver={driver} id={id} />
       </Suspense>
     </main>

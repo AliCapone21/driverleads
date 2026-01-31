@@ -26,6 +26,12 @@ type DriverRow = {
   endorsements: string[]
   created_at: string
   status: string | null
+
+  // Expectations
+  expected_gross: number | null
+  expected_rpm: number | null
+  expected_cpm: number | null
+  expected_miles: number | null
 }
 
 type TabType = "all" | "available" | "unlocked"
@@ -43,6 +49,18 @@ function calcAge(dob: string | null) {
 
 function typeLabel(t: "company" | "owner_operator") {
   return t === "owner_operator" ? "Owner Operator" : "Company Driver"
+}
+
+function isNumber(n: any): n is number {
+  return typeof n === "number" && Number.isFinite(n)
+}
+
+function formatMoney(n: number) {
+  return `$${Math.round(n).toLocaleString()}`
+}
+
+function formatMiles(n: number) {
+  return `${Math.round(n).toLocaleString()}`
 }
 
 const ease: [number, number, number, number] = [0.22, 1, 0.36, 1]
@@ -109,17 +127,14 @@ export default function DriversClient({ initialUser }: { initialUser: User | nul
 
         const currentUserId = sessionData.session?.user?.id || initialUser?.id
         if (currentUserId) {
-          const { data: unlockRows } = await supabase
-            .from("unlocks")
-            .select("driver_id")
-            .eq("user_id", currentUserId)
-          if (mounted) setUnlockedIds(new Set((unlockRows ?? []).map((r) => r.driver_id)))
+          const { data: unlockRows } = await supabase.from("unlocks").select("driver_id").eq("user_id", currentUserId)
+          if (mounted) setUnlockedIds(new Set((unlockRows ?? []).map((r: any) => r.driver_id)))
         }
 
         const { data, error } = await supabase
           .from("drivers")
           .select(
-            "id, first_name, last_initial, city, state, living_city, living_state, dob, driver_type, experience_years, endorsements, created_at, status"
+            "id, first_name, last_initial, city, state, living_city, living_state, dob, driver_type, experience_years, endorsements, created_at, status, expected_gross, expected_rpm, expected_cpm, expected_miles"
           )
           .order("created_at", { ascending: false })
 
@@ -146,9 +161,7 @@ export default function DriversClient({ initialUser }: { initialUser: User | nul
     const q = query.trim().toLowerCase()
     if (q) {
       list = list.filter((d) => {
-        const searchable = `${d.first_name} ${d.last_initial} ${d.city} ${d.state} ${d.living_city} ${d.living_state} ${(d.endorsements ?? []).join(
-          " "
-        )}`.toLowerCase()
+        const searchable = `${d.first_name} ${d.last_initial} ${d.city} ${d.state} ${d.living_city} ${d.living_state} ${(d.endorsements ?? []).join(" ")}`.toLowerCase()
         return searchable.includes(q)
       })
     }
@@ -179,10 +192,7 @@ export default function DriversClient({ initialUser }: { initialUser: User | nul
   }, [filtered, currentPage])
 
   const activeFiltersCount =
-    (typeFilter !== "all" ? 1 : 0) +
-    (minExp > 0 ? 1 : 0) +
-    (ageMin || ageMax ? 1 : 0) +
-    (sortBy !== "newest" ? 1 : 0)
+    (typeFilter !== "all" ? 1 : 0) + (minExp > 0 ? 1 : 0) + (ageMin || ageMax ? 1 : 0) + (sortBy !== "newest" ? 1 : 0)
 
   async function signOut() {
     await supabase.auth.signOut()
@@ -493,6 +503,8 @@ export default function DriversClient({ initialUser }: { initialUser: User | nul
 }
 
 function DriverCard({ data, isUnlocked }: { data: DriverRow; isUnlocked: boolean }) {
+  const isOO = data.driver_type === "owner_operator"
+
   return (
     <Link
       href={`/drivers/${data.id}`}
@@ -503,7 +515,9 @@ function DriverCard({ data, isUnlocked }: { data: DriverRow; isUnlocked: boolean
         <div className="flex-1 space-y-4">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <h3 className="text-xl font-extrabold text-zinc-900 dark:text-white tracking-tight">{data.first_name} {data.last_initial}</h3>
+              <h3 className="text-xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+                {data.first_name} {data.last_initial}
+              </h3>
 
               {isUnlocked && (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 text-[10px] font-extrabold uppercase tracking-wider border border-emerald-500/20">
@@ -527,7 +541,7 @@ function DriverCard({ data, isUnlocked }: { data: DriverRow; isUnlocked: boolean
             <div className="flex items-center gap-2">
               <span
                 className={`text-[10px] px-2.5 py-1 rounded-full font-extrabold uppercase tracking-wide border ${
-                  data.driver_type === "owner_operator"
+                  isOO
                     ? "bg-indigo-500/10 border-indigo-500/20 text-indigo-700 dark:text-indigo-200"
                     : "bg-zinc-100/80 border-zinc-200/70 text-zinc-600 dark:bg-white/5 dark:border-white/10 dark:text-white/70"
                 }`}
@@ -537,6 +551,50 @@ function DriverCard({ data, isUnlocked }: { data: DriverRow; isUnlocked: boolean
             </div>
           </div>
 
+          {/* Expectations */}
+          <div className="p-3 rounded-2xl bg-emerald-500/5 dark:bg-emerald-500/[0.03] border border-emerald-500/10">
+            {isOO ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-0.5">
+                  <div className="text-[9px] font-extrabold uppercase text-emerald-700 dark:text-emerald-300/70 tracking-widest">
+                    Expected Gross
+                  </div>
+                  <div className="text-sm font-extrabold text-zinc-900 dark:text-emerald-50">
+                    {isNumber(data.expected_gross) ? `${formatMoney(data.expected_gross)}/wk` : "Flexible"}
+                  </div>
+                </div>
+                <div className="space-y-0.5 border-l border-emerald-500/10 pl-4">
+                  <div className="text-[9px] font-extrabold uppercase text-emerald-700 dark:text-emerald-300/70 tracking-widest">
+                    Min RPM
+                  </div>
+                  <div className="text-sm font-extrabold text-zinc-900 dark:text-emerald-50">
+                    {isNumber(data.expected_rpm) ? `$${data.expected_rpm.toFixed(2)}/mi` : "Flexible"}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-0.5">
+                  <div className="text-[9px] font-extrabold uppercase text-emerald-700 dark:text-emerald-300/70 tracking-widest">
+                    Expected CPM
+                  </div>
+                  <div className="text-sm font-extrabold text-zinc-900 dark:text-emerald-50">
+                    {isNumber(data.expected_cpm) ? `${Math.round(data.expected_cpm)}¢/mi` : "Flexible"}
+                  </div>
+                </div>
+                <div className="space-y-0.5 border-l border-emerald-500/10 pl-4">
+                  <div className="text-[9px] font-extrabold uppercase text-emerald-700 dark:text-emerald-300/70 tracking-widest">
+                    Desired Miles
+                  </div>
+                  <div className="text-sm font-extrabold text-zinc-900 dark:text-emerald-50">
+                    {isNumber(data.expected_miles) ? `${formatMiles(data.expected_miles)}/wk` : "Flexible"}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Core stats */}
           <div className="grid grid-cols-3 gap-2 py-3 border-t border-b border-zinc-200/60 dark:border-white/10">
             <div className="space-y-0.5">
               <div className="text-[10px] font-extrabold text-zinc-500 dark:text-white/45 uppercase">Location</div>
@@ -566,9 +624,7 @@ function DriverCard({ data, isUnlocked }: { data: DriverRow; isUnlocked: boolean
               </span>
             ))}
             {(data.endorsements?.length ?? 0) > 4 && (
-              <span className="text-xs font-medium text-zinc-500 dark:text-white/45 px-1 self-center">
-                +{data.endorsements.length - 4} more
-              </span>
+              <span className="text-xs font-medium text-zinc-500 dark:text-white/45 px-1 self-center">+{data.endorsements.length - 4} more</span>
             )}
           </div>
         </div>
@@ -584,7 +640,6 @@ function DriverCard({ data, isUnlocked }: { data: DriverRow; isUnlocked: boolean
               className="w-full md:w-auto px-6 py-3 bg-zinc-900 text-white dark:bg-white dark:text-black rounded-xl text-sm font-extrabold shadow-lg shadow-black/10 dark:shadow-black/40 flex items-center justify-center gap-2"
             >
               <span>Unlock</span>
-              <span className="bg-white/15 dark:bg-black/10 px-1.5 py-0.5 rounded text-xs">$10</span>
             </motion.div>
           )}
         </div>

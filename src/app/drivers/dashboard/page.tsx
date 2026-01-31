@@ -7,15 +7,22 @@ export const dynamic = "force-dynamic"
 
 export default function DriverDashboardPage() {
   return (
-    <main className="min-h-screen bg-[#070A12] text-white p-6 md:p-12 font-sans selection:bg-emerald-500/30">
-      <Suspense fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-pulse flex flex-col items-center gap-4">
-             <div className="h-12 w-12 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
-             <p className="text-white/50 text-sm font-medium">Loading...</p>
+    // ✅ IMPORTANT: do NOT hardcode dark-only styles here.
+    // Let ThemeProvider + <html class="dark"> control the theme.
+    <main className="min-h-screen bg-white text-zinc-900 dark:bg-[#070A12] dark:text-white font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
+      <Suspense
+        fallback={
+          <div className="min-h-screen flex items-center justify-center px-6">
+            <div className="animate-pulse flex flex-col items-center gap-4">
+              <div className="relative">
+                <div className="h-12 w-12 rounded-full border-2 border-emerald-500/20" />
+                <div className="absolute inset-0 h-12 w-12 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
+              </div>
+              <p className="text-zinc-600 dark:text-white/60 text-sm font-semibold">Loading dashboard…</p>
+            </div>
           </div>
-        </div>
-      }>
+        }
+      >
         <DashboardContent />
       </Suspense>
     </main>

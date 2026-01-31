@@ -1,3 +1,5 @@
+// src/app/admin/page.tsx
+
 import { Suspense } from "react"
 import AdminDashboard from "@/components/AdminDashboard"
 import { createClient } from "@/utils/supabase/server"

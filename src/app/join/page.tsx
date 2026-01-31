@@ -1,3 +1,5 @@
+// src/app/join/page.tsx
+
 import { Suspense } from "react"
 import JoinClient from "@/components/JoinClient"
 

@@ -1,3 +1,5 @@
+// src/app/api/checkout/route.ts
+
 import { NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe"
 import { createClient } from "@/utils/supabase/server"

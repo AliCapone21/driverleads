@@ -1,3 +1,4 @@
+// src/components/AboutContent.tsx
 "use client"
 
 import React from "react"
@@ -19,7 +20,7 @@ export default function AboutContent() {
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/40 dark:to-black/30" />
       </div>
 
-      {/* Header */}
+      {/* Header - This MUST be inside the Suspense boundary in the parent page */}
       <header className="fixed top-0 w-full z-50 bg-white/70 dark:bg-black/45 backdrop-blur-xl border-b border-zinc-200/60 dark:border-zinc-800/60">
         <div className="mx-auto max-w-7xl px-6">
           <div className="h-[84px] flex items-center justify-between">
@@ -38,7 +39,6 @@ export default function AboutContent() {
               </a>
             </div>
 
-            {/* Middle Breadcrumb Navigation */}
             <nav className="hidden md:flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] uppercase">
                 <a href="/" className="text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50 transition-colors">
                     Homepage
@@ -49,22 +49,15 @@ export default function AboutContent() {
 
             <div className="flex items-center gap-3">
               <ThemeToggle />
-              <a
-                href="/login"
-                className="hidden sm:inline text-[11px] font-semibold tracking-[0.16em] uppercase text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50 transition-colors"
-              >
+              <a href="/login" className="hidden sm:inline text-[11px] font-semibold tracking-[0.16em] uppercase text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50 transition-colors">
                 Log In
               </a>
-              <a
-                href="/join"
-                className="hidden sm:inline-flex rounded-full px-5 py-2.5 text-[10px] font-semibold tracking-[0.18em] uppercase bg-zinc-950 text-white dark:bg-zinc-50 dark:text-black border border-zinc-950/10 dark:border-white/10 shadow-[0_18px_50px_-36px_rgba(0,0,0,0.55)] hover:shadow-[0_28px_70px_-52px_rgba(0,0,0,0.6)] transition-shadow"
-              >
+              <a href="/join" className="hidden sm:inline-flex rounded-full px-5 py-2.5 text-[10px] font-semibold tracking-[0.18em] uppercase bg-zinc-950 text-white dark:bg-zinc-50 dark:text-black border border-zinc-950/10 dark:border-white/10 shadow-[0_18px_50px_-36px_rgba(0,0,0,0.55)] hover:shadow-[0_28px_70px_-52px_rgba(0,0,0,0.6)] transition-shadow">
                 Join Free
               </a>
             </div>
           </div>
 
-          {/* Mobile Navigation */}
           <div className="md:hidden pb-4">
             <nav className="flex items-center justify-center gap-3 text-[10px] font-semibold tracking-[0.14em] uppercase">
                 <a href="/" className="text-zinc-500 dark:text-zinc-400">Homepage</a>
@@ -115,16 +108,14 @@ export default function AboutContent() {
                   <div className="rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/70 dark:bg-white/[0.02] p-6">
                     <div className="text-sm font-semibold tracking-tight">For drivers</div>
                     <p className="mt-2 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">
-                      Set your pay expectations up front (CPM, miles, gross, RPM). Your contact info stays private unless
-                      you choose to connect.
+                      Set your pay expectations up front (CPM, miles, gross, RPM). Your contact info stays private unless you choose to connect.
                     </p>
                   </div>
 
                   <div className="rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/70 dark:bg-white/[0.02] p-6">
                     <div className="text-sm font-semibold tracking-tight">For recruiters</div>
                     <p className="mt-2 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">
-                      Browse and filter drivers by what matters—including pay. Unlock contact details only when you’re
-                      ready to reach out.
+                      Browse and filter drivers by what matters—including pay. Unlock contact details only when you’re ready to reach out.
                     </p>
                   </div>
 
@@ -133,22 +124,15 @@ export default function AboutContent() {
                       How drivers get added
                     </div>
                     <p className="mt-2 text-[13px] leading-relaxed text-zinc-700 dark:text-zinc-200">
-                      Drivers can join on their own—or we can add them with permission by phone or text. Either way, they
-                      control what’s shared and when.
+                      Drivers can join on their own—or we can add them with permission by phone or text. Either way, they control what’s shared and when.
                     </p>
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
-                    <a
-                      href="/join"
-                      className="inline-flex justify-center rounded-full px-7 py-3 text-[11px] font-semibold tracking-[0.18em] uppercase bg-zinc-950 text-white dark:bg-zinc-50 dark:text-black border border-zinc-950/10 dark:border-white/10 shadow-[0_18px_50px_-36px_rgba(0,0,0,0.55)] hover:shadow-[0_28px_70px_-52px_rgba(0,0,0,0.6)] transition-shadow"
-                    >
+                    <a href="/join" className="inline-flex justify-center rounded-full px-7 py-3 text-[11px] font-semibold tracking-[0.18em] uppercase bg-zinc-950 text-white dark:bg-zinc-50 dark:text-black border border-zinc-950/10 dark:border-white/10 shadow-[0_18px_50px_-36px_rgba(0,0,0,0.55)] hover:shadow-[0_28px_70px_-52px_rgba(0,0,0,0.6)] transition-shadow">
                       Join Free
                     </a>
-                    <a
-                      href="/drivers"
-                      className="inline-flex justify-center rounded-full px-7 py-3 text-[11px] font-semibold tracking-[0.18em] uppercase border border-zinc-200/80 dark:border-zinc-800/80 bg-white/55 dark:bg-white/[0.03] text-zinc-950 dark:text-white backdrop-blur-md hover:bg-white/75 dark:hover:bg-white/[0.05] transition-colors"
-                    >
+                    <a href="/drivers" className="inline-flex justify-center rounded-full px-7 py-3 text-[11px] font-semibold tracking-[0.18em] uppercase border border-zinc-200/80 dark:border-zinc-800/80 bg-white/55 dark:bg-white/[0.03] text-zinc-950 dark:text-white backdrop-blur-md hover:bg-white/75 dark:hover:bg-white/[0.05] transition-colors">
                       Browse Drivers
                     </a>
                   </div>
@@ -171,28 +155,15 @@ export default function AboutContent() {
                 <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-800 hidden md:block" />
                 <div className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">Driver Leads</div>
               </div>
-
               <div className="flex flex-col items-center md:items-end gap-4">
                 <div className="flex items-center gap-6 text-[9px] lg:text-[11px] font-semibold tracking-[0.16em] uppercase text-zinc-500 dark:text-zinc-400">
-                  <a href="/about" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
-                    About Us
-                  </a>
-                  <a href="/contact" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
-                    Contact Us
-                  </a>
-                  <a href="/privacy" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
-                    Privacy
-                  </a>
-                  <a href="/privacy/terms" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
-                    Terms
-                  </a>
-                  <a href="/privacy/legal" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
-                    Legal
-                  </a>
+                  <a href="/about" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">About Us</a>
+                  <a href="/contact" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">Contact Us</a>
+                  <a href="/privacy" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">Privacy</a>
+                  <a href="/privacy/terms" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">Terms</a>
+                  <a href="/privacy/legal" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">Legal</a>
                 </div>
-                <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                  © 2026 Driver Leads. All rights reserved.
-                </div>
+                <div className="text-[11px] text-zinc-500 dark:text-zinc-400">© 2026 Driver Leads. All rights reserved.</div>
               </div>
             </div>
           </div>

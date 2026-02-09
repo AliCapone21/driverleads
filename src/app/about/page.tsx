@@ -1,14 +1,14 @@
 // src/app/about/page.tsx
 "use client"
 
-import React from "react"
+import React, { Suspense } from "react"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { ThemeToggle } from "@/components/ThemeToggle"
 
 const ease: [number, number, number, number] = [0.16, 1, 0.3, 1]
 
-export default function AboutPage() {
+function AboutContent() {
   return (
     <main className="min-h-screen relative bg-white text-zinc-950 dark:bg-[#060607] dark:text-zinc-50 transition-colors duration-500 selection:bg-emerald-500/25">
       {/* Background */}
@@ -166,7 +166,7 @@ export default function AboutPage() {
           <div className="rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/60 dark:bg-white/[0.03] backdrop-blur-xl shadow-[0_40px_90px_-70px_rgba(0,0,0,0.45)]">
             <div className="px-6 md:px-8 py-10 flex flex-col md:flex-row items-center md:justify-between gap-10 md:gap-6">
               <div className="flex flex-col md:flex-row items-center gap-4">
-                <div className="relative h-12 w-40 scale-300 transition-transform">
+              <div className="relative h-12 w-40 scale-300 transition-transform">
                   <Image src="/logo3.png" alt="Driver Leads" fill className="object-contain" />
                 </div>
                 <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-800 hidden md:block" />
@@ -200,5 +200,13 @@ export default function AboutPage() {
         </div>
       </footer>
     </main>
+  )
+}
+
+export default function AboutPage() {
+  return (
+    <Suspense fallback={null}>
+      <AboutContent />
+    </Suspense>
   )
 }

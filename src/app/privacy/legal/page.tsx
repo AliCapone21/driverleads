@@ -1,14 +1,14 @@
 // src/app/privacy/legal.tsx
 "use client"
 
-import React from "react"
+import React, { Suspense } from "react"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { ThemeToggle } from "@/components/ThemeToggle"
 
 const ease: [number, number, number, number] = [0.16, 1, 0.3, 1]
 
-export default function LegalPage() {
+function LegalContent() {
   return (
     <main className="min-h-screen relative bg-white text-zinc-950 dark:bg-[#060607] dark:text-zinc-50 transition-colors duration-500 selection:bg-emerald-500/25">
       {/* Background */}
@@ -221,5 +221,13 @@ function Card({ title, body }: { title: string; body: string }) {
       <div className="text-sm font-semibold tracking-tight">{title}</div>
       <p className="mt-2 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">{body}</p>
     </div>
+  )
+}
+
+export default function LegalPage() {
+  return (
+    <Suspense fallback={null}>
+      <LegalContent />
+    </Suspense>
   )
 }

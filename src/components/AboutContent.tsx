@@ -156,7 +156,7 @@ export default function AboutContent() {
                 <div className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">Driver Leads</div>
               </div>
               <div className="flex flex-col items-center md:items-end gap-4">
-                <div className="flex items-center gap-5 text-[7px] lg:text-[11px] font-semibold tracking-[0.16em] uppercase text-zinc-500 dark:text-zinc-400">
+                <div className="flex items-center gap-5 text-[9px] lg:text-[11px] font-semibold tracking-[0.16em] uppercase text-zinc-500 dark:text-zinc-400">
                   <a href="/about" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">About Us</a>
                   <a href="/privacy" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">Privacy</a>
                   <a href="/privacy/terms" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">Terms</a>

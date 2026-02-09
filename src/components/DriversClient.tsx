@@ -86,23 +86,9 @@ export default function DriversClient({ initialUser }: { initialUser: User | nul
 
   const [typeFilter, setTypeFilter] = useState<"all" | "company" | "owner_operator">("all")
   const [minExp, setMinExp] = useState<number>(0)
-  const [ageMin, setAgeMin] = useState<string>("")
-  const [ageMax, setAgeMax] = useState<string>("")
   const [sortBy, setSortBy] = useState<"newest" | "exp_desc" | "age_asc" | "age_desc">("newest")
-  const [showFilters, setShowFilters] = useState(false)
 
-  // Ref for Age Range Click-Outside
-  const ageDropdownRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (ageDropdownRef.current && !ageDropdownRef.current.contains(event.target as Node)) {
-        setShowFilters(false)
-      }
-    }
-    if (showFilters) document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [showFilters])
 
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab)
@@ -112,9 +98,11 @@ export default function DriversClient({ initialUser }: { initialUser: User | nul
     setCurrentPage(1)
   }
 
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [typeFilter, minExp, ageMin, ageMax, query, sortBy])
+// Update this useEffect: remove ageMin and ageMax
+useEffect(() => {
+  setCurrentPage(1)
+}, [typeFilter, minExp, query, sortBy]) // removed ageMin, ageMax
+
 
   useEffect(() => {
     let mounted = true
@@ -169,10 +157,6 @@ export default function DriversClient({ initialUser }: { initialUser: User | nul
     if (typeFilter !== "all") list = list.filter((d) => d.driver_type === typeFilter)
     if (minExp > 0) list = list.filter((d) => (d.experience_years ?? 0) >= minExp)
 
-    const minAgeNum = ageMin.trim() ? Number(ageMin) : null
-    const maxAgeNum = ageMax.trim() ? Number(ageMax) : null
-    if (minAgeNum !== null) list = list.filter((d) => (calcAge(d.dob) ?? 0) >= minAgeNum)
-    if (maxAgeNum !== null) list = list.filter((d) => (calcAge(d.dob) ?? 0) <= maxAgeNum)
 
     const sorted = [...list]
     if (sortBy === "exp_desc") sorted.sort((a, b) => (b.experience_years ?? 0) - (a.experience_years ?? 0))
@@ -181,7 +165,7 @@ export default function DriversClient({ initialUser }: { initialUser: User | nul
     else sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
     return sorted
-  }, [drivers, unlockedIds, activeTab, query, typeFilter, minExp, ageMin, ageMax, sortBy])
+  }, [drivers, unlockedIds, activeTab, query, typeFilter, minExp, sortBy])
 
   const totalItems = filtered.length
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE)
@@ -191,8 +175,10 @@ export default function DriversClient({ initialUser }: { initialUser: User | nul
     return filtered.slice(start, start + ITEMS_PER_PAGE)
   }, [filtered, currentPage])
 
-  const activeFiltersCount =
-    (typeFilter !== "all" ? 1 : 0) + (minExp > 0 ? 1 : 0) + (ageMin || ageMax ? 1 : 0) + (sortBy !== "newest" ? 1 : 0)
+
+// Update this variable: remove the age check
+const activeFiltersCount =
+  (typeFilter !== "all" ? 1 : 0) + (minExp > 0 ? 1 : 0) + (sortBy !== "newest" ? 1 : 0)
 
   async function signOut() {
     await supabase.auth.signOut()
@@ -347,60 +333,7 @@ export default function DriversClient({ initialUser }: { initialUser: User | nul
                 onSelect={(val) => setMinExp(Number(val))}
               />
 
-              {/* Age Range */}
-              <div className="relative" ref={ageDropdownRef}>
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={`px-4 py-2.5 rounded-xl border text-xs font-bold transition-all whitespace-nowrap shadow-sm ${
-                    ageMin || ageMax
-                      ? "bg-zinc-900 text-white border-zinc-900/20 dark:bg-white dark:text-black dark:border-white/20 shadow-black/10 dark:shadow-black/20"
-                      : "bg-white text-zinc-700 border-zinc-200/70 hover:border-zinc-300 hover:bg-zinc-50 dark:bg-white/5 dark:text-white/70 dark:border-white/10 dark:hover:border-white/20 dark:hover:bg-white/10 shadow-black/5 dark:shadow-black/20"
-                  }`}
-                >
-                  {ageMin || ageMax ? `Age: ${ageMin || "0"}-${ageMax || "∞"}` : "Age Range"}
-                </button>
-
-                <AnimatePresence>
-                  {showFilters && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -10, scale: 0.98 }}
-                      transition={{ duration: 0.45, ease }}
-                      className="bg-white/95 dark:bg-black/80 border border-zinc-200/70 dark:border-white/10 rounded-2xl p-5 shadow-2xl shadow-black/10 dark:shadow-black/50 backdrop-blur-xl flex items-end gap-3 w-80 absolute top-[105%] left-0 z-50"
-                    >
-                      <div className="flex-1">
-                        <label className="block text-[10px] font-bold text-zinc-500 dark:text-white/45 uppercase mb-1.5">Min Age</label>
-                        <input
-                          type="number"
-                          className="w-full bg-white border border-zinc-200/70 dark:bg-white/5 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-white/30 focus:ring-2 focus:ring-emerald-500/20 dark:focus:ring-white/25 outline-none"
-                          value={ageMin}
-                          onChange={(e) => setAgeMin(e.target.value)}
-                          placeholder="18"
-                        />
-                      </div>
-
-                      <div className="flex-1">
-                        <label className="block text-[10px] font-bold text-zinc-500 dark:text-white/45 uppercase mb-1.5">Max Age</label>
-                        <input
-                          type="number"
-                          className="w-full bg-white border border-zinc-200/70 dark:bg-white/5 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-white/30 focus:ring-2 focus:ring-emerald-500/20 dark:focus:ring-white/25 outline-none"
-                          value={ageMax}
-                          onChange={(e) => setAgeMax(e.target.value)}
-                          placeholder="65"
-                        />
-                      </div>
-
-                      <button
-                        onClick={() => setShowFilters(false)}
-                        className="px-5 py-2 bg-zinc-900 text-white dark:bg-white dark:text-black rounded-lg text-sm font-extrabold shadow-lg shadow-black/10 dark:shadow-black/20 hover:opacity-90 transition-opacity"
-                      >
-                        Apply
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+    
 
               <FilterDropdown
                 label={sortBy === "newest" ? "Newest" : sortBy === "exp_desc" ? "Most Exp" : sortBy === "age_asc" ? "Youngest" : "Oldest"}
@@ -419,8 +352,6 @@ export default function DriversClient({ initialUser }: { initialUser: User | nul
                   onClick={() => {
                     setTypeFilter("all")
                     setMinExp(0)
-                    setAgeMin("")
-                    setAgeMax("")
                     setSortBy("newest")
                     setQuery("")
                   }}

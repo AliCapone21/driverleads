@@ -186,13 +186,11 @@ function LegalContent() {
               </div>
 
               <div className="flex flex-col items-center md:items-end gap-4">
-                <div className="flex items-center gap-6 text-[9px] lg:text-[11px] font-semibold tracking-[0.16em] uppercase text-zinc-500 dark:text-zinc-400">
+                <div className="flex items-center gap-5 text-[7px] lg:text-[11px] font-semibold tracking-[0.16em] uppercase text-zinc-500 dark:text-zinc-400">
                   <a href="/about" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
                     About Us
                   </a>
-                  <a href="/contact" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
-                    Contact Us
-                  </a>
+                 
                   <a href="/privacy" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
                     Privacy
                   </a>
@@ -201,6 +199,9 @@ function LegalContent() {
                   </a>
                   <a href="/privacy/legal" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
                     Legal
+                  </a>
+                   <a href="/contact" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
+                    Contact Us
                   </a>
                 </div>
                 <div className="text-[11px] text-zinc-500 dark:text-zinc-400">

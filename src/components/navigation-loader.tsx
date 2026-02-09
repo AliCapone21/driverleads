@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react"
 import Link, { LinkProps } from "next/link"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { AnimatePresence, motion } from "framer-motion"
 
 type NavLoaderCtx = {
@@ -16,17 +16,18 @@ const Ctx = createContext<NavLoaderCtx | null>(null)
 
 export function NavigationProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const searchParams = useSearchParams()
   const [isNavigating, setIsNavigating] = useState(false)
 
   const fallbackTimer = useRef<number | null>(null)
+  const lastSearchRef = useRef<string>("")
 
   const value = useMemo(
     () => ({
       isNavigating,
       start: () => {
         setIsNavigating(true)
-        // ✅ safety fallback: if navigation doesn't change URL, stop after 10s
+
+        // safety fallback: if navigation doesn't change URL, stop after 10s
         if (fallbackTimer.current) window.clearTimeout(fallbackTimer.current)
         fallbackTimer.current = window.setTimeout(() => setIsNavigating(false), 10_000)
       },
@@ -38,11 +39,31 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
     [isNavigating]
   )
 
-  // Auto-stop loader when URL changes (navigation complete)
+  // Stop loader when pathname changes (navigation complete)
   useEffect(() => {
     setIsNavigating(false)
     if (fallbackTimer.current) window.clearTimeout(fallbackTimer.current)
-  }, [pathname, searchParams])
+  }, [pathname])
+
+  // Also stop loader when ONLY the query string changes (without Next's useSearchParams)
+  useEffect(() => {
+    // initialize
+    lastSearchRef.current = typeof window !== "undefined" ? window.location.search : ""
+
+    const tick = () => {
+      const current = window.location.search
+      if (current !== lastSearchRef.current) {
+        lastSearchRef.current = current
+        setIsNavigating(false)
+        if (fallbackTimer.current) window.clearTimeout(fallbackTimer.current)
+      }
+    }
+
+    // lightweight polling only while navigating, otherwise do nothing
+    if (!isNavigating) return
+    const id = window.setInterval(tick, 150)
+    return () => window.clearInterval(id)
+  }, [isNavigating])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
@@ -53,13 +74,16 @@ export function useNavigationLoader() {
   return ctx
 }
 
-/** ✅ Use this instead of <Link> when you want loader */
+/** Use this instead of <Link> when you want loader */
 export function NavLink({
   href,
   onClick,
   children,
   ...props
-}: LinkProps & React.AnchorHTMLAttributes<HTMLAnchorElement> & { children: React.ReactNode }) {
+}: LinkProps &
+  React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+    children: React.ReactNode
+  }) {
   const { start } = useNavigationLoader()
 
   return (
@@ -68,7 +92,6 @@ export function NavLink({
       {...props}
       onClick={(e) => {
         onClick?.(e)
-        // if a click is prevented, don't start loader
         if (e.defaultPrevented) return
         start()
       }}
@@ -78,7 +101,8 @@ export function NavLink({
   )
 }
 
-/** ✅ Use this helper for router.push with loader */
+
+/** Helper for router.push with loader */
 export function useNavPush() {
   const router = useRouter()
   const { start } = useNavigationLoader()

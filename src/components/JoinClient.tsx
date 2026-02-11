@@ -247,19 +247,22 @@ export default function JoinClient() {
 
       {/* Top bar */}
       <div className="relative z-20">
-        <div className="mx-auto max-w-6xl px-4 py-5 flex items-center justify-between">
+        {/* ✅ mobile padding + more consistent logo sizing */}
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 sm:py-5 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative h-15 w-30 scale-300 transition-transform duration-300 group-hover:scale-[3.7]">
+            {/* ✅ Fix: logo was huge on mobile because of scale-300; make it responsive */}
+            <div className="relative h-30 w-44 scale-110 sm:scale-125 lg:scale-180 transition-transform">
               <Image src="/logo3.png" alt="Driver Leads" fill priority className="object-contain" />
             </div>
             <span className="sr-only">Driver Leads</span>
           </Link>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {mounted && <ThemeToggle />}
+
             <Link
               href="/login"
-              className="text-xs font-bold px-4 py-2 rounded-xl bg-zinc-100/80 dark:bg-white/5 border border-zinc-200/70 dark:border-white/10
+              className="text-[11px] sm:text-xs font-black px-3 sm:px-4 py-2 rounded-xl bg-zinc-100/80 dark:bg-white/5 border border-zinc-200/70 dark:border-white/10
                          text-zinc-700 dark:text-white/75 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 transition-all"
             >
               Sign in
@@ -268,7 +271,8 @@ export default function JoinClient() {
         </div>
       </div>
 
-      <div className="relative z-10 flex items-center justify-center px-4 pb-12">
+      {/* ✅ mobile-first spacing: less vertical padding on small screens */}
+      <div className="relative z-10 flex items-start sm:items-center justify-center px-4 pb-10 sm:pb-12 pt-2 sm:pt-6">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
@@ -276,17 +280,17 @@ export default function JoinClient() {
           className="w-full max-w-xl"
         >
           {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-zinc-900 dark:text-white">
+          <div className="text-center mb-6 sm:mb-8">
+            <h1 className="text-[28px] sm:text-4xl font-black tracking-tight text-zinc-900 dark:text-white">
               Join Driver Leads
             </h1>
-            <p className="mt-2 text-sm text-zinc-500 dark:text-white/55">
+            <p className="mt-2 text-[12px] sm:text-sm text-zinc-500 dark:text-white/55">
               {stepTitle} • Step {step} of 2
             </p>
           </div>
 
           {/* Progress */}
-          <div className="flex gap-2 mb-6">
+          <div className="flex gap-2 mb-5 sm:mb-6">
             {[1, 2].map((i) => (
               <div key={i} className="h-1.5 flex-1 rounded-full overflow-hidden bg-zinc-200/70 dark:bg-white/10">
                 <motion.div
@@ -300,8 +304,8 @@ export default function JoinClient() {
           </div>
 
           {/* Card */}
-          <div className="rounded-[28px] bg-white/85 dark:bg-zinc-900/55 backdrop-blur-xl border border-zinc-200/70 dark:border-white/10 shadow-2xl shadow-black/10 dark:shadow-black/40 overflow-hidden">
-            <div className="px-6 sm:px-8 py-6 border-b border-zinc-200/60 dark:border-white/10 flex items-center justify-between">
+          <div className="rounded-[24px] sm:rounded-[28px] bg-white/85 dark:bg-zinc-900/55 backdrop-blur-xl border border-zinc-200/70 dark:border-white/10 shadow-2xl shadow-black/10 dark:shadow-black/40 overflow-hidden">
+            <div className="px-5 sm:px-8 py-5 sm:py-6 border-b border-zinc-200/60 dark:border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex flex-col">
                 <span className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-300/80">
                   Secure onboarding
@@ -319,7 +323,7 @@ export default function JoinClient() {
               </div>
             </div>
 
-            <form onSubmit={handleJoin} className="px-6 sm:px-8 py-7">
+            <form onSubmit={handleJoin} className="px-5 sm:px-8 py-6 sm:py-7">
               <AnimatePresence mode="wait">
                 {step === 1 ? (
                   <motion.div
@@ -401,7 +405,7 @@ export default function JoinClient() {
                       </div>
                     </div>
 
-                    <div className="pt-2">
+                    <div className="pt-1">
                       <button
                         type="button"
                         onClick={handleNextStep}
@@ -424,7 +428,7 @@ export default function JoinClient() {
                     transition={{ duration: 0.4, ease }}
                     className="space-y-5"
                   >
-                    {/* ✅ Driver type (beautiful segmented control) */}
+                    {/* ✅ Driver type (segmented control) */}
                     <div className="space-y-2">
                       <label className="block text-[10px] font-black uppercase tracking-widest ml-1 text-zinc-500 dark:text-zinc-400">
                         Driver type
@@ -607,18 +611,15 @@ export default function JoinClient() {
                         onChange={handlePhoneChange}
                         isError={step2Attempted && formData.phone.length < 17}
                       />
-                      <div>
-                        <Input
-                          label="CDL number"
-                          name="cdl_number"
-                          placeholder="6–12 letters/numbers"
-                          value={formData.cdl_number}
-                          onChange={handleCdlChange}
-                          maxLength={12}
-                          isError={step2Attempted && !isValidCdlNumber(formData.cdl_number)}
-                        />
-                      
-                      </div>
+                      <Input
+                        label="CDL number"
+                        name="cdl_number"
+                        placeholder="6–12 letters/numbers"
+                        value={formData.cdl_number}
+                        onChange={handleCdlChange}
+                        maxLength={12}
+                        isError={step2Attempted && !isValidCdlNumber(formData.cdl_number)}
+                      />
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -653,7 +654,7 @@ export default function JoinClient() {
                       />
                     </div>
 
-                    {/* ✅ NEW: Expectations block */}
+                    {/* ✅ Expectations block */}
                     <div
                       className={[
                         "rounded-3xl p-5 border backdrop-blur-xl",
@@ -666,9 +667,7 @@ export default function JoinClient() {
                           <div className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-300/80">
                             Expectations
                           </div>
-                          <div className="text-sm font-extrabold text-zinc-800 dark:text-white/85">
-                            Pay & workload targets
-                          </div>
+                          <div className="text-sm font-extrabold text-zinc-800 dark:text-white/85">Pay & workload targets</div>
                           <p className="text-[11px] text-zinc-500 dark:text-white/45 mt-1">{salaryHint}</p>
                         </div>
                         <div className="text-[11px] font-semibold text-zinc-500 dark:text-white/50 text-right">
@@ -801,7 +800,7 @@ export default function JoinClient() {
                       <button
                         type="button"
                         onClick={() => setStep(1)}
-                        className="px-6 py-4 rounded-2xl font-black uppercase tracking-[0.18em] text-[10px]
+                        className="px-5 sm:px-6 py-4 rounded-2xl font-black uppercase tracking-[0.18em] text-[10px]
                                    bg-zinc-100/80 dark:bg-white/5 border border-zinc-200/70 dark:border-white/10
                                    text-zinc-700 dark:text-white/70 hover:bg-zinc-100 dark:hover:bg-white/10 transition-all"
                       >
@@ -824,7 +823,7 @@ export default function JoinClient() {
             </form>
           </div>
 
-          <p className="text-center mt-7 text-xs text-zinc-600 dark:text-white/45 font-semibold">
+          <p className="text-center mt-6 sm:mt-7 text-xs text-zinc-600 dark:text-white/45 font-semibold">
             Already have an account?{" "}
             <Link href="/login" className="text-emerald-700 dark:text-emerald-300 font-black hover:underline">
               Sign In
@@ -872,14 +871,34 @@ function Input({
 
 /* --- ICONS --- */
 const EyeIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
     <circle cx="12" cy="12" r="3" />
   </svg>
 )
 
 const EyeOffIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
     <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
     <path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
@@ -888,7 +907,18 @@ const EyeOffIcon = () => (
 )
 
 const UploadIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
     <polyline points="17 8 12 3 7 8" />
     <line x1="12" y1="3" x2="12" y2="15" />

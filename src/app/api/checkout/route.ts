@@ -1,12 +1,9 @@
-// src/app/api/checkout/route.ts
-
 import { NextResponse } from "next/server"
-import { stripe } from "@/lib/stripe"
 import { createClient } from "@/utils/supabase/server"
 
 export async function POST(req: Request) {
   try {
-    // 1. Verify User Authentication
+    // 1. Foydalanuvchini tekshirish
     const supabase = await createClient()
     const { data: { user }, error: userErr } = await supabase.auth.getUser()
 
@@ -14,70 +11,85 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized. Please log in." }, { status: 401 })
     }
 
-    // 2. Parse and Validate Body
+    // 2. Body ma'lumotlarini olish
     const body = await req.json().catch(() => ({}))
-    const { driverId } = body as { driverId?: string }
-    
-    if (!driverId) {
-      return NextResponse.json({ error: "Driver ID is required for checkout." }, { status: 400 })
-    }
+    const { driverId, productId } = body as { driverId?: string; productId?: string }
 
-    const priceId = process.env.STRIPE_PRICE_ID
+    // Konfiguratsiya
+    const apiKey = process.env.DODO_PAYMENTS_API_KEY
+    const defaultProductId = process.env.DODO_PRODUCT_ID
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
 
-    if (!priceId || !siteUrl) {
-      console.error("❌ Configuration Error: Missing STRIPE_PRICE_ID or NEXT_PUBLIC_SITE_URL")
+    if (!apiKey || !siteUrl) {
       return NextResponse.json({ error: "Server configuration error." }, { status: 500 })
     }
 
-    // 3. Prevent Double Purchase
-    // Check if the user already has an active unlock for this driver
-    const { data: existing } = await supabase
-      .from("unlocks")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("driver_id", driverId)
-      .maybeSingle()
-    
-    if (existing) {
-      return NextResponse.json({ 
-        error: "You have already unlocked this driver.",
-        code: "ALREADY_UNLOCKED" 
-      }, { status: 400 })
+    // 3. Driver Unlock mantiqi (agar bu haydovchini ochish bo'lsa)
+    if (driverId) {
+      const { data: existing } = await supabase
+        .from("unlocks")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("driver_id", driverId)
+        .maybeSingle()
+      
+      if (existing) {
+        return NextResponse.json({ error: "Already unlocked.", code: "ALREADY_UNLOCKED" }, { status: 400 })
+      }
     }
 
-    console.log(`💳 Initiating checkout: User ${user.email} -> Driver ${driverId}`)
+    const targetProductId = productId || defaultProductId
+    if (!targetProductId) {
+      return NextResponse.json({ error: "Product ID is required." }, { status: 400 })
+    }
 
-    // 4. Create Stripe Checkout Session
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      customer_email: user.email,
-      payment_method_types: ["card"], // Explicitly set allowed methods
-      line_items: [
+    // 4. Dodo Payments uchun Payload (product_cart bilan)
+    const dodoPayload = {
+      product_cart: [
         {
-          price: priceId,
+          product_id: targetProductId,
           quantity: 1,
-        },
+        }
       ],
-      // Success/Cancel handling with clean URL construction
-      success_url: `${siteUrl}/drivers/${driverId}?paid=1`,
-      cancel_url: `${siteUrl}/drivers/${driverId}?canceled=1`,
+      customer: {
+        email: user.email,
+        name: user.user_metadata?.full_name || user.email?.split('@')[0], // Ismni ham yuborish tavsiya etiladi
+      },
       metadata: {
-        driverId,
+        driverId: driverId || "donation",
         userId: user.id,
       },
-    })
-
-    if (!session.url) {
-      throw new Error("Stripe failed to generate a session URL.")
+      return_url: driverId 
+        ? `${siteUrl}/drivers/${driverId}?status=success`
+        : `${siteUrl}/about?status=thank_you`,
     }
 
-    return NextResponse.json({ url: session.url })
+    console.log("📤 Sending to Dodo:", JSON.stringify(dodoPayload, null, 2))
+
+    // 5. So'rovni yuborish
+    const response = await fetch("https://api.dodopayments.com/v1/checkouts", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey.trim()}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(dodoPayload),
+    })
+
+    const session = await response.json()
+
+    if (!response.ok) {
+      console.error("❌ Dodo API Error:", session)
+      throw new Error(session.message || "Dodo API Error")
+    }
+
+    return NextResponse.json({ url: session.checkout_url })
 
   } catch (error: any) {
-    console.error("❌ Checkout API Error:", error.message)
+    console.error("❌ Checkout Error:", error.message)
     return NextResponse.json({ 
-      error: error.message || "An unexpected error occurred during checkout." 
+      error: error.message || "Internal Server Error",
+      cause: error.cause?.message
     }, { status: 500 })
   }
 }

@@ -96,15 +96,14 @@ function PrivacyContent() {
                 Your info stays private until you decide to share it.
               </h1>
               <p className="mt-5 text-[15px] md:text-[16px] leading-relaxed text-zinc-600 dark:text-zinc-300">
-                Driver Leads is built to reduce spam. Recruiters can browse profiles, but contact details stay locked
-                until an unlock happens.
+                Driver Leads is built to reduce spam. Recruiters can browse profiles, but contact details stay locked until a verified unlock happens.
               </p>
 
               <div className="mt-7 rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/70 dark:bg-white/[0.02] p-6">
                 <div className="text-[10px] font-semibold tracking-[0.22em] uppercase text-zinc-500 dark:text-zinc-400">
                   Last updated
                 </div>
-                <div className="mt-2 text-sm font-semibold tracking-tight">February 9, 2026</div>
+                <div className="mt-2 text-sm font-semibold tracking-tight">February 11, 2026</div>
                 <div className="mt-3 text-[12px] leading-relaxed text-zinc-600 dark:text-zinc-300">
                   We’ll update this page if our privacy practices change.
                 </div>
@@ -129,7 +128,7 @@ function PrivacyContent() {
                   />
                   <Card
                     title="2) What recruiters can see"
-                    body="Recruiters can browse driver profiles and filter by expectations. Contact details are only shown after an unlock payment."
+                    body="Recruiters can browse driver profiles and filter by expectations. Contact details are only shown after a secure unlock payment."
                   />
                   <Card
                     title="3) Accounts and login"
@@ -137,7 +136,7 @@ function PrivacyContent() {
                   />
                   <Card
                     title="4) Payments"
-                    body="Recruiter unlocks may require payment. We plan to use Lemon Squeezy to process payments. We do not store your full card details on our servers."
+                    body="Recruiter unlocks may require payment processed via Dodo Payments. We do not store your full card details on our servers."
                   />
                   <Card
                     title="5) Messages, calls, and texts"
@@ -162,8 +161,8 @@ function PrivacyContent() {
                     </div>
                     <p className="mt-2 text-[13px] leading-relaxed text-zinc-700 dark:text-zinc-200">
                       Email us at{" "}
-                      <a href="mailto:support@driverleads.com" className="underline underline-offset-4 hover:opacity-90">
-                        support@driverleads.com
+                      <a href="mailto:support@driverleads.live" className="underline underline-offset-4 hover:opacity-90">
+                        support@driverleads.live
                       </a>{" "}
                       for privacy questions or deletion requests.
                     </p>
@@ -202,7 +201,7 @@ function PrivacyContent() {
                   <a href="/privacy/legal" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
                     Legal
                   </a>
-                    <a href="/contact" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
+                   <a href="/contact" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
                     Contact Us
                   </a>
                 </div>

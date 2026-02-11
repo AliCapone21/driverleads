@@ -12,6 +12,12 @@ const ease: [number, number, number, number] = [0.16, 1, 0.3, 1]
 function ContactContent() {
   const [submitted, setSubmitted] = useState(false)
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    // Hozircha "fake" submit, kelajakda Resend yoki Supabase ulanadi
+    setSubmitted(true)
+  }
+
   return (
     <main className="min-h-screen relative bg-white text-zinc-950 dark:bg-[#060607] dark:text-zinc-50 transition-colors duration-500 selection:bg-emerald-500/25">
       {/* Background */}
@@ -42,7 +48,6 @@ function ContactContent() {
               </a>
             </div>
 
-            {/* Middle Breadcrumb Navigation */}
             <nav className="hidden md:flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] uppercase">
                 <a href="/" className="text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50 transition-colors">
                     Homepage
@@ -53,31 +58,13 @@ function ContactContent() {
 
             <div className="flex items-center gap-3">
               <ThemeToggle />
-              <a
-                href="/login"
-                className="hidden sm:inline text-[11px] font-semibold tracking-[0.16em] uppercase text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50 transition-colors"
-              >
+              <a href="/login" className="hidden sm:inline text-[11px] font-semibold tracking-[0.16em] uppercase text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50 transition-colors">
                 Log In
               </a>
-              <a
-                href="/join"
-                className="hidden sm:inline-flex rounded-full px-5 py-2.5 text-[10px] font-semibold tracking-[0.18em] uppercase bg-zinc-950 text-white dark:bg-zinc-50 dark:text-black border border-zinc-950/10 dark:border-white/10 shadow-[0_18px_50px_-36px_rgba(0,0,0,0.55)] hover:shadow-[0_28px_70px_-52px_rgba(0,0,0,0.6)] transition-shadow"
-              >
+              <a href="/join" className="hidden sm:inline-flex rounded-full px-5 py-2.5 text-[10px] font-semibold tracking-[0.18em] uppercase bg-zinc-950 text-white dark:bg-zinc-50 dark:text-black border border-zinc-950/10 dark:border-white/10 shadow-lg transition-all hover:scale-105">
                 Join Free
               </a>
             </div>
-          </div>
-
-          {/* Mobile Navigation */}
-          <div className="md:hidden pb-4">
-            <nav className="flex items-center justify-center gap-3 text-[10px] font-semibold tracking-[0.14em] uppercase">
-                <a href="/" className="text-zinc-500 dark:text-zinc-400">Homepage</a>
-                <span className="text-zinc-300 dark:text-zinc-700">/</span>
-                <span className="text-zinc-950 dark:text-zinc-50">Contact Us</span>
-                <span className="mx-2 text-zinc-300 dark:text-zinc-700">|</span>
-                <a href="/login" className="text-zinc-600 dark:text-zinc-400">Log In</a>
-                <a href="/join" className="text-emerald-600 dark:text-emerald-400">Join</a>
-            </nav>
           </div>
         </div>
       </header>
@@ -92,29 +79,28 @@ function ContactContent() {
             className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-start"
           >
             <div className="lg:col-span-5">
-              <p className="text-[10px] font-semibold tracking-[0.26em] uppercase text-emerald-700 dark:text-emerald-300">
+              <p className="text-[10px] font-bold tracking-[0.26em] uppercase text-emerald-700 dark:text-emerald-300">
                 Contact
               </p>
-              <h1 className="mt-4 text-[34px] md:text-[44px] leading-[1.06] tracking-[-0.03em] font-semibold">
-                Let’s talk—support, partnerships, or early access.
+              <h1 className="mt-4 text-[34px] md:text-[44px] leading-[1.06] tracking-[-0.03em] font-bold">
+                Let’s talk—support, partnerships, or access.
               </h1>
               <p className="mt-5 text-[15px] md:text-[16px] leading-relaxed text-zinc-600 dark:text-zinc-300">
-                Send us a message and we’ll get back to you. If you’re a recruiter, tell us what lanes you hire for. If
-                you’re a driver, tell us your role (company / owner-operator) and your target pay.
+                Send our startup team a message and we’ll get back to you. If you’re a recruiter, tell us your requirements. If you’re a driver, we're here to help you get verified.
               </p>
 
               <div className="mt-8 space-y-3">
-                <InfoLine icon={<Mail className="h-4 w-4" />} label="Email" value="support@driverleads.com" />
-                <InfoLine icon={<Phone className="h-4 w-4" />} label="Phone" value="(000) 000-0000" />
-                <InfoLine icon={<MapPin className="h-4 w-4" />} label="Location" value="United States (Remote)" />
+                <InfoLine icon={<Mail className="h-4 w-4" />} label="Email" value="support@driverleads.live" />
+                <InfoLine icon={<Phone className="h-4 w-4" />} label="Status" value="Live Support Active" />
+                <InfoLine icon={<MapPin className="h-4 w-4" />} label="Team" value="DriverLeads Startup (Remote)" />
               </div>
 
               <div className="mt-7 rounded-2xl border border-emerald-500/15 bg-gradient-to-b from-emerald-500/[0.06] to-transparent dark:from-emerald-500/[0.06] p-6">
                 <div className="text-[10px] font-semibold tracking-[0.22em] uppercase text-emerald-700/80 dark:text-emerald-300/70">
-                  Faster answers
+                  Quick Support
                 </div>
                 <p className="mt-2 text-[13px] leading-relaxed text-zinc-700 dark:text-zinc-200">
-                  Include your role (driver or recruiter) + what you’re trying to do. We’ll route it correctly.
+                  Our team reads every message. Include your role (Driver or Recruiter) for a faster response.
                 </p>
               </div>
             </div>
@@ -125,64 +111,59 @@ function ContactContent() {
                   <div className="text-[10px] font-semibold tracking-[0.22em] uppercase text-zinc-500 dark:text-zinc-400">
                     Send a message
                   </div>
-                  <div className="mt-2 text-base font-semibold tracking-tight">We read every message.</div>
+                  <div className="mt-2 text-base font-semibold tracking-tight">We respond within 24 hours.</div>
                 </div>
 
                 <div className="p-6 md:p-8">
                   {submitted ? (
-                    <div className="rounded-2xl border border-emerald-500/15 bg-gradient-to-b from-emerald-500/[0.08] to-transparent p-6">
-                      <div className="flex items-start gap-3">
-                        <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5" />
-                        <div>
-                          <div className="text-sm font-semibold tracking-tight">Message ready.</div>
-                          <p className="mt-1 text-[13px] leading-relaxed text-zinc-700 dark:text-zinc-200">
-                            Replace the email/phone above with your real contact. If you want this form to actually send,
-                            tell me whether you want Supabase (table + edge function), Resend, or a simple mailto.
-                          </p>
-                          <button
-                            onClick={() => setSubmitted(false)}
-                            className="mt-4 inline-flex rounded-full px-6 py-2.5 text-[10px] font-semibold tracking-[0.18em] uppercase border border-zinc-200/80 dark:border-zinc-800/80 bg-white/55 dark:bg-white/[0.03] text-zinc-950 dark:text-white backdrop-blur-md hover:bg-white/75 dark:hover:bg-white/[0.05] transition-colors"
-                          >
-                            Send another
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault()
-                        setSubmitted(true)
-                      }}
-                      className="space-y-4"
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="rounded-2xl border border-emerald-500/15 bg-gradient-to-b from-emerald-500/[0.08] to-transparent p-10 text-center"
                     >
+                      <div className="flex flex-col items-center">
+                        <CheckCircle2 className="h-12 w-12 text-emerald-600 dark:text-emerald-400 mb-4" />
+                        <h3 className="text-xl font-bold tracking-tight">Message Sent!</h3>
+                        <p className="mt-2 text-[14px] leading-relaxed text-zinc-600 dark:text-zinc-300 max-w-sm">
+                          Thanks for reaching out to the DriverLeads team. We've received your request and will get back to you shortly at your provided email.
+                        </p>
+                        <button
+                          onClick={() => setSubmitted(false)}
+                          className="mt-6 inline-flex rounded-full px-8 py-3 text-[10px] font-bold uppercase tracking-widest bg-zinc-950 text-white dark:bg-zinc-50 dark:text-black transition-transform hover:scale-105"
+                        >
+                          Send Another
+                        </button>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <form onSubmit={handleSubmit} className="space-y-4">
                       <div className="grid sm:grid-cols-2 gap-4">
-                        <Field label="Name" placeholder="Your name" />
-                        <Field label="Email" placeholder="you@example.com" type="email" />
+                        <Field label="Name" placeholder="Your full name" required />
+                        <Field label="Email" placeholder="you@example.com" type="email" required />
                       </div>
 
                       <div className="grid sm:grid-cols-2 gap-4">
-                        <Field label="Role" placeholder="Driver / Recruiter" />
-                        <Field label="Company (optional)" placeholder="Company name" />
+                        <Field label="Role" placeholder="Driver / Recruiter / Carrier" required />
+                        <Field label="Company (Optional)" placeholder="Business name" />
                       </div>
 
-                      <Field label="Subject" placeholder="How can we help?" />
-                      <Field label="Message" placeholder="Write your message..." textarea rows={6} />
+                      <Field label="Subject" placeholder="How can we help you?" required />
+                      <Field label="Message" placeholder="Write your message here..." textarea rows={5} required />
 
                       <div className="pt-2 flex flex-col sm:flex-row gap-3">
                         <button
                           type="submit"
-                          className="inline-flex items-center justify-center gap-2 rounded-full px-7 py-3 text-[11px] font-semibold tracking-[0.18em] uppercase bg-zinc-950 text-white dark:bg-zinc-50 dark:text-black border border-zinc-950/10 dark:border-white/10 shadow-[0_18px_50px_-36px_rgba(0,0,0,0.55)] hover:shadow-[0_28px_70px_-52px_rgba(0,0,0,0.6)] transition-shadow"
+                          className="inline-flex items-center justify-center gap-2 rounded-full px-8 py-4 text-[11px] font-bold tracking-widest uppercase bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 transition-all hover:bg-emerald-500 hover:scale-[1.02] active:scale-[0.98]"
                         >
                           <Send className="h-4 w-4" />
-                          Send
+                          Send Message
                         </button>
 
                         <a
-                          href="mailto:support@driverleads.com"
-                          className="inline-flex items-center justify-center rounded-full px-7 py-3 text-[11px] font-semibold tracking-[0.18em] uppercase border border-zinc-200/80 dark:border-zinc-800/80 bg-white/55 dark:bg-white/[0.03] text-zinc-950 dark:text-white backdrop-blur-md hover:bg-white/75 dark:hover:bg-white/[0.05] transition-colors"
+                          href="mailto:support@driverleads.live"
+                          className="inline-flex items-center justify-center rounded-full px-8 py-4 text-[11px] font-bold tracking-widest uppercase border border-zinc-200/80 dark:border-zinc-800/80 bg-white/55 dark:bg-white/[0.03] text-zinc-950 dark:text-white backdrop-blur-md transition-all hover:bg-white/80 dark:hover:bg-white/[0.05]"
                         >
-                          Email instead
+                          Email Direct
                         </a>
                       </div>
                     </form>
@@ -200,7 +181,7 @@ function ContactContent() {
           <div className="rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/60 dark:bg-white/[0.03] backdrop-blur-xl shadow-[0_40px_90px_-70px_rgba(0,0,0,0.45)]">
             <div className="px-6 md:px-8 py-10 flex flex-col md:flex-row items-center md:justify-between gap-10 md:gap-6">
               <div className="flex flex-col md:flex-row items-center gap-4">
-               <div className="relative h-12 w-40 scale-300 transition-transform">
+                <div className="relative h-12 w-40 scale-[3] transition-transform origin-left md:origin-center">
                   <Image src="/logo3.png" alt="Driver Leads" fill className="object-contain" />
                 </div>
                 <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-800 hidden md:block" />
@@ -209,22 +190,11 @@ function ContactContent() {
 
               <div className="flex flex-col items-center md:items-end gap-4">
                  <div className="flex items-center gap-5 text-[9px] lg:text-[11px] font-semibold tracking-[0.16em] uppercase text-zinc-500 dark:text-zinc-400">
-                  <a href="/about" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
-                    About Us
-                  </a>
-                 
-                  <a href="/privacy" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
-                    Privacy
-                  </a>
-                  <a href="/privacy/terms" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
-                    Terms
-                  </a>
-                  <a href="/privacy/legal" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
-                    Legal
-                  </a>
-                   <a href="/contact" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
-                    Contact Us
-                  </a>
+                  <a href="/about" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">About Us</a>
+                  <a href="/privacy" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">Privacy</a>
+                  <a href="/privacy/terms" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">Terms</a>
+                  <a href="/privacy/legal" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">Legal</a>
+                  <a href="/contact" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">Contact Us</a>
                 </div>
                 <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
                   © 2026 Driver Leads. All rights reserved.
@@ -246,10 +216,7 @@ export default function ContactPage() {
     )
 }
 
-/* -------------------------------
-   Small UI helpers
--------------------------------- */
-
+/* UI Helpers */
 function InfoLine({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="rounded-xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/70 dark:bg-white/[0.02] px-4 py-3">
@@ -268,30 +235,34 @@ function Field({
   type = "text",
   textarea,
   rows = 4,
+  required = false
 }: {
   label: string
   placeholder: string
   type?: string
   textarea?: boolean
   rows?: number
+  required?: boolean
 }) {
   return (
     <label className="block">
       <div className="mb-2 text-[10px] font-semibold tracking-[0.22em] uppercase text-zinc-500 dark:text-zinc-400">
-        {label}
+        {label} {required && <span className="text-emerald-500">*</span>}
       </div>
 
       {textarea ? (
         <textarea
+          required={required}
           rows={rows}
           placeholder={placeholder}
-          className="w-full rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/70 dark:bg-white/[0.02] px-4 py-3 text-sm font-semibold tracking-tight placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/30 transition"
+          className="w-full rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/70 dark:bg-white/[0.02] px-4 py-3 text-sm font-semibold tracking-tight placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:ring-2 focus:ring-emerald-500/30 transition"
         />
       ) : (
         <input
+          required={required}
           type={type}
           placeholder={placeholder}
-          className="w-full rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/70 dark:bg-white/[0.02] px-4 py-3 text-sm font-semibold tracking-tight placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/30 transition"
+          className="w-full rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/70 dark:bg-white/[0.02] px-4 py-3 text-sm font-semibold tracking-tight placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:ring-2 focus:ring-emerald-500/30 transition"
         />
       )}
     </label>

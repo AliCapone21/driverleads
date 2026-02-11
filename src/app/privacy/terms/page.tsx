@@ -39,7 +39,6 @@ function TermsContent() {
               </a>
             </div>
 
-            {/* Middle Breadcrumb Navigation */}
             <nav className="hidden md:flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] uppercase">
                 <a href="/" className="text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50 transition-colors">
                     Homepage
@@ -65,7 +64,6 @@ function TermsContent() {
             </div>
           </div>
 
-          {/* Mobile Navigation */}
           <div className="md:hidden pb-4">
             <nav className="flex items-center justify-center gap-3 text-[10px] font-semibold tracking-[0.14em] uppercase">
                 <a href="/" className="text-zinc-500 dark:text-zinc-400">Homepage</a>
@@ -96,16 +94,16 @@ function TermsContent() {
                 Terms of Service
               </h1>
               <p className="mt-5 text-[15px] md:text-[16px] leading-relaxed text-zinc-600 dark:text-zinc-300">
-                These terms explain how Driver Leads works, what you can expect from us, and what we expect from users.
+                These terms explain how Driver Leads works, what you can expect from our startup team, and what we expect from users.
               </p>
 
               <div className="mt-7 rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/70 dark:bg-white/[0.02] p-6">
                 <div className="text-[10px] font-semibold tracking-[0.22em] uppercase text-zinc-500 dark:text-zinc-400">
                   Last updated
                 </div>
-                <div className="mt-2 text-sm font-semibold tracking-tight">February 9, 2026</div>
+                <div className="mt-2 text-sm font-semibold tracking-tight">February 11, 2026</div>
                 <div className="mt-3 text-[12px] leading-relaxed text-zinc-600 dark:text-zinc-300">
-                  If we change these terms, we’ll update this date.
+                  As a 3-month startup project, we may update these terms frequently as we grow.
                 </div>
               </div>
             </div>
@@ -114,72 +112,54 @@ function TermsContent() {
               <div className="rounded-[28px] border border-zinc-200/70 dark:border-zinc-800/70 bg-white/65 dark:bg-white/[0.03] backdrop-blur-xl shadow-[0_60px_120px_-95px_rgba(0,0,0,0.55)] overflow-hidden">
                 <div className="px-6 md:px-8 py-7 border-b border-zinc-200/60 dark:border-zinc-800/60">
                   <div className="text-[10px] font-semibold tracking-[0.22em] uppercase text-zinc-500 dark:text-zinc-400">
-                    Simple terms (starter)
+                    User Agreement
                   </div>
                   <div className="mt-2 text-base font-semibold tracking-tight">
-                    Be respectful, be honest, and use the platform the right way.
+                    Be respectful, be honest, and use the platform for professional hiring.
                   </div>
                 </div>
 
                 <div className="p-6 md:p-8 space-y-5">
                   <Card
-                    title="1) Who can use Driver Leads"
-                    body="You must be able to form a legal agreement where you live. Drivers and recruiters must provide accurate information."
+                    title="1) Eligibility"
+                    body="Users must provide accurate information. Recruiters and carriers must be legitimate businesses looking for CDL drivers."
                   />
                   <Card
-                    title="2) What Driver Leads does"
-                    body="We provide a marketplace where drivers list expectations and recruiters can browse. Recruiters can unlock contact details by paying a fee."
+                    title="2) Marketplace Nature"
+                    body="We provide a marketplace platform. The DriverLeads team does not act as an employer or agency. Unlocks provide direct contact access."
                   />
                   <Card
-                    title="3) Accounts"
-                    body="You are responsible for your account and keeping your login safe. If you think your account was accessed by someone else, contact us."
+                    title="3) Driver Profiles"
+                    body="Drivers control their profile data. Any data shared by phone or text for profile creation is done so with explicit driver permission."
                   />
                   <Card
-                    title="4) Driver profiles and expectations"
-                    body="Drivers control their profile and can update expectations at any time. Drivers should not post illegal content or someone else’s private info."
+                    title="4) Merchant of Record Payments"
+                    body="Payments are processed via Dodo Payments, our Merchant of Record. They handle global tax compliance and secure processing for all unlocks."
                   />
                   <Card
-                    title="5) Recruiter unlocks and payments"
-                    body="Recruiters may pay to unlock contact info. Unlock fees are shown at purchase time and may change. We plan to process payments using Lemon Squeezy."
+                    title="5) Refund Policy"
+                    body="Since unlocking reveals private contact details, refunds are typically not provided. If a technical error occurs, contact our support team."
                   />
                   <Card
-                    title="6) Refunds"
-                    body="Because unlocking reveals private contact information, refunds are generally not available after an unlock is completed. If something broke (for example: contact info did not reveal), contact support and we’ll review it."
+                    title="6) Prohibited Use"
+                    body="No scraping, no automated data collection, and no harassment of drivers. Misuse of contact info will result in a permanent ban."
                   />
                   <Card
-                    title="7) Prohibited use"
-                    body="No spam, harassment, scraping, or trying to bypass locked info. No fake profiles. No selling or sharing unlocked contact info outside your hiring needs."
-                  />
-                  <Card
-                    title="8) Content removal and suspension"
-                    body="We may remove content or suspend accounts that violate these terms or harm other users."
-                  />
-                  <Card
-                    title="9) Availability and changes"
-                    body="We may change features, pricing, or availability over time. We work to keep the service reliable, but we can’t promise it will always be uninterrupted."
-                  />
-                  <Card
-                    title="10) Limitation of liability"
-                    body="Driver Leads is provided “as is.” We are not responsible for hiring outcomes, agreements between users, or any off-platform interactions."
-                  />
-                  <Card
-                    title="11) Contact"
-                    body="Questions about these terms? Email support@driverleads.com."
+                    title="7) Startup Status"
+                    body="DriverLeads is an early-stage startup. While we strive for 100% uptime, service may be updated or modified as we improve the platform."
                   />
 
                   <div className="rounded-2xl border border-emerald-500/15 bg-gradient-to-b from-emerald-500/[0.06] to-transparent dark:from-emerald-500/[0.06] p-6">
                     <div className="text-[10px] font-semibold tracking-[0.22em] uppercase text-emerald-700/80 dark:text-emerald-300/70">
-                      Important note
+                      Contact Support
                     </div>
                     <p className="mt-2 text-[13px] leading-relaxed text-zinc-700 dark:text-zinc-200">
-                      These terms are a starter template. For launch, you should replace them with attorney-reviewed
-                      terms for your business and state.
+                      Questions? Email us at{" "}
+                      <a href="mailto:support@driverleads.live" className="underline underline-offset-4 hover:opacity-90">
+                        support@driverleads.live
+                      </a>
                     </p>
                   </div>
-
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                    If you continue using Driver Leads, you agree to these terms.
-                  </p>
                 </div>
               </div>
             </div>
@@ -193,7 +173,7 @@ function TermsContent() {
           <div className="rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/60 dark:bg-white/[0.03] backdrop-blur-xl shadow-[0_40px_90px_-70px_rgba(0,0,0,0.45)]">
             <div className="px-6 md:px-8 py-10 flex flex-col md:flex-row items-center md:justify-between gap-10 md:gap-6">
               <div className="flex flex-col md:flex-row items-center gap-4">
-                <div className="relative h-12 w-40 scale-300 transition-transform">
+                <div className="relative h-12 w-40 scale-[3] transition-transform origin-left md:origin-center">
                   <Image src="/logo3.png" alt="Driver Leads" fill className="object-contain" />
                 </div>
                 <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-800 hidden md:block" />
@@ -201,22 +181,12 @@ function TermsContent() {
               </div>
 
               <div className="flex flex-col items-center md:items-end gap-4">
-               <div className="flex items-center gap-5 text-[9px] lg:text-[11px] font-semibold tracking-[0.16em] uppercase text-zinc-500 dark:text-zinc-400">
-                  <a href="/about" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
-                    About Us
-                  </a>
-                  <a href="/privacy" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
-                    Privacy
-                  </a>
-                  <a href="/privacy/terms" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
-                    Terms
-                  </a>
-                  <a href="/privacy/legal" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
-                    Legal
-                  </a>
-                  <a href="/contact" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">
-                    Contact Us
-                  </a>
+                <div className="flex items-center gap-5 text-[9px] lg:text-[11px] font-semibold tracking-[0.16em] uppercase text-zinc-500 dark:text-zinc-400">
+                  <a href="/about" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">About Us</a>
+                  <a href="/privacy" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">Privacy</a>
+                  <a href="/privacy/terms" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">Terms</a>
+                  <a href="/privacy/legal" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">Legal</a>
+                  <a href="/contact" className="hover:text-zinc-950 dark:hover:text-zinc-50 transition-colors">Contact Us</a>
                 </div>
                 <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
                   © 2026 Driver Leads. All rights reserved.
@@ -232,7 +202,7 @@ function TermsContent() {
 
 function Card({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/70 dark:bg-white/[0.02] p-6">
+    <div className="rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/70 dark:bg-white/[0.02] p-6 transition-colors hover:border-emerald-500/20">
       <div className="text-sm font-semibold tracking-tight">{title}</div>
       <p className="mt-2 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">{body}</p>
     </div>

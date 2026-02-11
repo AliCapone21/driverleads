@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     console.log("📤 Sending to Dodo:", JSON.stringify(dodoPayload, null, 2))
 
     // 5. So'rovni yuborish
-    const response = await fetch("https://api.dodopayments.com/v1/checkouts", {
+    const response = await fetch("https://test.dodopayments.com/checkouts", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey.trim()}`,

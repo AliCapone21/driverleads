@@ -24,6 +24,7 @@ export default function LoginClient() {
   useEffect(() => setMounted(true), [])
 
   async function signIn() {
+    if (loading) return
     setLoading(true)
     setMsg(null)
 
@@ -39,6 +40,11 @@ export default function LoginClient() {
       router.refresh()
       router.push("/drivers")
     }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    await signIn()
   }
 
   return (
@@ -89,7 +95,8 @@ export default function LoginClient() {
             </span>
           </div>
 
-          <div className="space-y-5">
+          {/* ✅ FORM: pressing Enter now submits */}
+          <form onSubmit={handleSubmit} className="space-y-5">
             <Field
               label="Email"
               type="email"
@@ -97,6 +104,7 @@ export default function LoginClient() {
               onChange={setEmail}
               placeholder="name@company.com"
               disabled={loading}
+              autoComplete="email"
             />
 
             <div>
@@ -110,8 +118,10 @@ export default function LoginClient() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   disabled={loading}
+                  autoComplete="current-password"
                   className="w-full rounded-2xl bg-zinc-50 dark:bg-white/5 border border-zinc-200/70 dark:border-white/10 px-4 py-4 pr-12 text-zinc-900 dark:text-white font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/35 transition-all"
                 />
+                {/* make sure this doesn't submit the form */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -136,8 +146,9 @@ export default function LoginClient() {
             </AnimatePresence>
 
             <div className="pt-1 space-y-4">
+              {/* ✅ submit button */}
               <button
-                onClick={signIn}
+                type="submit"
                 disabled={loading}
                 className="w-full rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-black py-4 font-black uppercase text-xs tracking-[0.2em] hover:opacity-90 transition-all active:scale-[0.99] shadow-lg disabled:opacity-50"
               >
@@ -151,12 +162,25 @@ export default function LoginClient() {
                 </Link>
               </p>
             </div>
-          </div>
+          </form>
         </div>
 
         <div className="mt-8 flex justify-center">
-          <Link href="/" className="group flex items-center gap-3 px-7 py-3.5 rounded-2xl bg-zinc-100/70 dark:bg-white/5 border border-zinc-200/70 text-zinc-600 dark:text-white/70 hover:text-zinc-900 transition-all">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-x-1 transition-transform">
+          <Link
+            href="/"
+            className="group flex items-center gap-3 px-7 py-3.5 rounded-2xl bg-zinc-100/70 dark:bg-white/5 border border-zinc-200/70 text-zinc-600 dark:text-white/70 hover:text-zinc-900 transition-all"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="group-hover:-translate-x-1 transition-transform"
+            >
               <path d="m15 18-6-6 6-6" />
             </svg>
             <span className="text-[10px] font-black uppercase tracking-[0.2em]">Back to Home</span>
@@ -167,21 +191,40 @@ export default function LoginClient() {
   )
 }
 
-function Field({ label, type, placeholder, value, onChange, disabled }: any) {
+function Field({ label, type, placeholder, value, onChange, disabled, autoComplete }: any) {
   return (
     <div>
-      <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400 mb-2 ml-1">{label}</label>
+      <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400 mb-2 ml-1">
+        {label}
+      </label>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
+        autoComplete={autoComplete}
         className="w-full rounded-2xl bg-zinc-50 dark:bg-white/5 border border-zinc-200/70 dark:border-white/10 px-4 py-4 text-zinc-900 dark:text-white font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/35 transition-all"
       />
     </div>
   )
 }
 
-function EyeIcon() { return <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z" /><circle cx="12" cy="12" r="3" /></svg> }
-function EyeOffIcon() { return <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M3 3l18 18" /><path d="M10.6 10.6a3 3 0 004.2 4.2" /><path d="M9.5 5.2A10.6 10.6 0 0112 5c6.5 0 10 7 10 7a18.3 18.3 0 01-4.3 5.2" /><path d="M6.3 6.3A18.3 18.3 0 002 12s3.5 7 10 7c1 0 2-.2 3-.5" /></svg> }
+function EyeIcon() {
+  return (
+    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+      <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+}
+function EyeOffIcon() {
+  return (
+    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+      <path d="M3 3l18 18" />
+      <path d="M10.6 10.6a3 3 0 004.2 4.2" />
+      <path d="M9.5 5.2A10.6 10.6 0 0112 5c6.5 0 10 7 10 7a18.3 18.3 0 01-4.3 5.2" />
+      <path d="M6.3 6.3A18.3 18.3 0 002 12s3.5 7 10 7c1 0 2-.2 3-.5" />
+    </svg>
+  )
+}
